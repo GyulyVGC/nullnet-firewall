@@ -1,0 +1,18 @@
+[package]
+name = "nullnet-firewall"
+version = "0.1.0"
+edition = "2021"
+authors = [ "Giuliano Bellini" ]
+description = "Rust-based firewall for network drivers"
+readme = "README.md"
+repository = "https://github.com/GyulyVGC/nullnet-firewall"
+keywords = [ "firewall", "network", "packet", "security", "filter" ]
+categories = [ "network-programming" ]
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
+
+[dependencies]
+etherparse = "0.13.0"
