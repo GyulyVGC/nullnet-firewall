@@ -178,7 +178,7 @@ mod tests {
 
         assert_eq!(
             FirewallOption::new("--not-exists", "8.8.8.8"),
-            Err(FirewallError::UnknownOption("--not-exists"))
+            Err(FirewallError::UnknownOption("--not-exists".to_owned()))
         );
     }
 
@@ -238,24 +238,26 @@ mod tests {
 
         assert_eq!(
             FirewallRule::new("ACCEPT OUT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3"),
-            Err(FirewallError::InvalidDirection("ACCEPT"))
+            Err(FirewallError::InvalidDirection("ACCEPT".to_owned()))
         );
 
         assert_eq!(
             FirewallRule::new("OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport"),
-            Err(FirewallError::EmptyOption)
+            Err(FirewallError::EmptyOption("--dport".to_owned()))
         );
 
         assert_eq!(
             FirewallRule::new(
                 "OUT ACCEPT --dport 8 --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3"
             ),
-            Err(FirewallError::DuplicatedOption)
+            Err(FirewallError::DuplicatedOption("--dport".to_owned()))
         );
 
         assert_eq!(
             FirewallRule::new("OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3.3.3.3"),
-            Err(FirewallError::InvalidDportValue)
+            Err(FirewallError::InvalidDportValue(
+                "900:1000,1,2,3.3.3.3".to_owned()
+            ))
         );
 
         assert_eq!(
@@ -271,12 +273,12 @@ mod tests {
 
         assert_eq!(
             FirewallRule::new("UP ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3"),
-            Err(FirewallError::InvalidDirection("UP"))
+            Err(FirewallError::InvalidDirection("UP".to_owned()))
         );
 
         assert_eq!(
             FirewallRule::new("OUT PUTAWAY --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3"),
-            Err(FirewallError::InvalidAction("PUTAWAY"))
+            Err(FirewallError::InvalidAction("PUTAWAY".to_owned()))
         );
     }
 

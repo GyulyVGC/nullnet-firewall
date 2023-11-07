@@ -140,17 +140,23 @@ mod tests {
     fn test_new_sport_collections_invalid() {
         assert_eq!(
             PortCollection::new(FirewallOption::SPORT, "1,2,10:20,3,4,:1200"),
-            Err(FirewallError::InvalidSportValue)
+            Err(FirewallError::InvalidSportValue(
+                "1,2,10:20,3,4,:1200".to_owned()
+            ))
         );
 
         assert_eq!(
             PortCollection::new(FirewallOption::SPORT, "1,2,10:20,3,4,999-1200"),
-            Err(FirewallError::InvalidSportValue)
+            Err(FirewallError::InvalidSportValue(
+                "1,2,10:20,3,4,999-1200".to_owned()
+            ))
         );
 
         assert_eq!(
             PortCollection::new(FirewallOption::SPORT, "1,2,10:20,3,4,999-1200,"),
-            Err(FirewallError::InvalidSportValue)
+            Err(FirewallError::InvalidSportValue(
+                "1,2,10:20,3,4,999-1200,".to_owned()
+            ))
         );
     }
 
@@ -158,17 +164,23 @@ mod tests {
     fn test_new_dport_collections_invalid() {
         assert_eq!(
             PortCollection::new(FirewallOption::DPORT, "1,2,10:20,3,4,:1200"),
-            Err(FirewallError::InvalidDportValue)
+            Err(FirewallError::InvalidDportValue(
+                "1,2,10:20,3,4,:1200".to_owned()
+            ))
         );
 
         assert_eq!(
             PortCollection::new(FirewallOption::DPORT, "1,2,10:20,3,4,999-1200"),
-            Err(FirewallError::InvalidDportValue)
+            Err(FirewallError::InvalidDportValue(
+                "1,2,10:20,3,4,999-1200".to_owned()
+            ))
         );
 
         assert_eq!(
             PortCollection::new(FirewallOption::DPORT, "1,2,10:20,3,4,999-1200,"),
-            Err(FirewallError::InvalidDportValue)
+            Err(FirewallError::InvalidDportValue(
+                "1,2,10:20,3,4,999-1200,".to_owned()
+            ))
         );
     }
 

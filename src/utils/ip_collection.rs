@@ -182,7 +182,9 @@ mod tests {
                 FirewallOption::SOURCE,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9"
             ),
-            Err(FirewallError::InvalidSourceValue)
+            Err(FirewallError::InvalidSourceValue(
+                "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9".to_owned()
+            ))
         );
 
         assert_eq!(
@@ -190,7 +192,9 @@ mod tests {
                 FirewallOption::SOURCE,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9"
             ),
-            Err(FirewallError::InvalidSourceValue)
+            Err(FirewallError::InvalidSourceValue(
+                "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9".to_owned()
+            ))
         );
     }
 
@@ -201,7 +205,9 @@ mod tests {
                 FirewallOption::DEST,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9"
             ),
-            Err(FirewallError::InvalidDestValue)
+            Err(FirewallError::InvalidDestValue(
+                "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9".to_owned()
+            ))
         );
 
         assert_eq!(
@@ -209,7 +215,9 @@ mod tests {
                 FirewallOption::DEST,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9"
             ),
-            Err(FirewallError::InvalidDestValue)
+            Err(FirewallError::InvalidDestValue(
+                "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9".to_owned()
+            ))
         );
     }
 
