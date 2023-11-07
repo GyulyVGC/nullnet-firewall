@@ -1,6 +1,6 @@
 use etherparse::TransportHeader;
 
-pub fn get_sport(transport_header: Option<TransportHeader>) -> Option<u16> {
+pub(crate) fn get_sport(transport_header: Option<TransportHeader>) -> Option<u16> {
     if let Some(transport) = transport_header {
         match transport {
             TransportHeader::Tcp(h) => Some(h.source_port),
@@ -12,7 +12,7 @@ pub fn get_sport(transport_header: Option<TransportHeader>) -> Option<u16> {
     }
 }
 
-pub fn get_dport(transport_header: Option<TransportHeader>) -> Option<u16> {
+pub(crate) fn get_dport(transport_header: Option<TransportHeader>) -> Option<u16> {
     if let Some(transport) = transport_header {
         match transport {
             TransportHeader::Tcp(h) => Some(h.destination_port),
@@ -24,7 +24,7 @@ pub fn get_dport(transport_header: Option<TransportHeader>) -> Option<u16> {
     }
 }
 
-pub fn get_icmp_type(transport_header: Option<TransportHeader>) -> Option<u8> {
+pub(crate) fn get_icmp_type(transport_header: Option<TransportHeader>) -> Option<u8> {
     if let Some(transport) = transport_header {
         match transport {
             TransportHeader::Icmpv4(h) => Some(*h.to_bytes().first().unwrap()),
@@ -39,7 +39,9 @@ pub fn get_icmp_type(transport_header: Option<TransportHeader>) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
-    use crate::raw_packets::test_packets::{ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
+    use crate::utils::raw_packets::test_packets::{
+        ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+    };
     use etherparse::PacketHeaders;
 
     #[test]

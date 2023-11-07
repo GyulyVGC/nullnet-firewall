@@ -37,7 +37,9 @@ pub(crate) fn get_proto(ip_header: Option<IpHeader>) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use crate::fields::ip_header::{get_dest, get_proto, get_source};
-    use crate::raw_packets::test_packets::{ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
+    use crate::utils::raw_packets::test_packets::{
+        ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+    };
     use etherparse::PacketHeaders;
     use std::net::IpAddr;
     use std::str::FromStr;

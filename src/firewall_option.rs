@@ -1,5 +1,5 @@
-use crate::ip_collection::IpCollection;
-use crate::port_collection::PortCollection;
+use crate::utils::ip_collection::IpCollection;
+use crate::utils::port_collection::PortCollection;
 use crate::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport, FirewallError};
 use etherparse::PacketHeaders;
 use std::str::FromStr;

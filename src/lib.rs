@@ -4,9 +4,7 @@ mod firewall_direction;
 mod firewall_error;
 mod firewall_option;
 mod firewall_rule;
-mod ip_collection;
-mod port_collection;
-mod raw_packets;
+mod utils;
 
 use crate::fields::ip_header::{get_dest, get_proto, get_source};
 use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
@@ -99,9 +97,11 @@ impl Firewall {
 #[cfg(test)]
 mod tests {
     use crate::firewall_option::FirewallOption;
-    use crate::ip_collection::IpCollection;
-    use crate::port_collection::PortCollection;
-    use crate::raw_packets::test_packets::{ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
+    use crate::utils::ip_collection::IpCollection;
+    use crate::utils::port_collection::PortCollection;
+    use crate::utils::raw_packets::test_packets::{
+        ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+    };
     use crate::Firewall;
     use crate::{FirewallAction, FirewallDirection, FirewallError, FirewallRule};
     use std::net::IpAddr;
