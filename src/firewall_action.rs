@@ -30,7 +30,7 @@ impl FromStr for FirewallAction {
             "ACCEPT" => Ok(Self::Accept),
             "DENY" => Ok(Self::Deny),
             "REJECT" => Ok(Self::Reject),
-            _ => Err(FirewallError::InvalidAction),
+            x => Err(FirewallError::InvalidAction(x.to_owned())),
         }
     }
 }

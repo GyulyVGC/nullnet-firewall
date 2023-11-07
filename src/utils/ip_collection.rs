@@ -16,8 +16,8 @@ impl IpCollection {
 
     pub(crate) fn new(opt: &str, str: &str) -> Result<Self, FirewallError> {
         let err = match opt {
-            FirewallOption::DEST => FirewallError::InvalidDestValue,
-            FirewallOption::SOURCE => FirewallError::InvalidSourceValue,
+            FirewallOption::DEST => FirewallError::InvalidDestValue(str.to_owned()),
+            FirewallOption::SOURCE => FirewallError::InvalidSourceValue(str.to_owned()),
             _ => panic!("Should not happen!"),
         };
         let mut ips = Vec::new();
@@ -28,16 +28,18 @@ impl IpCollection {
             if object.contains(Self::RANGE_SEPARATOR) {
                 // IP range
                 let mut subparts = object.split(Self::RANGE_SEPARATOR);
-                let (lower_bound, upper_bound) =
-                    (subparts.next().ok_or(err)?, subparts.next().ok_or(err)?);
+                let (lower_bound, upper_bound) = (
+                    subparts.next().ok_or(err.clone())?,
+                    subparts.next().ok_or(err.clone())?,
+                );
                 let range = RangeInclusive::new(
-                    IpAddr::from_str(lower_bound).map_err(|_| err)?,
-                    IpAddr::from_str(upper_bound).map_err(|_| err)?,
+                    IpAddr::from_str(lower_bound).map_err(|_| err.clone())?,
+                    IpAddr::from_str(upper_bound).map_err(|_| err.clone())?,
                 );
                 ranges.push(range);
             } else {
                 // individual IP
-                let ip = IpAddr::from_str(object).map_err(|_| err)?;
+                let ip = IpAddr::from_str(object).map_err(|_| err.clone())?;
                 ips.push(ip);
             }
         }

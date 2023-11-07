@@ -178,7 +178,7 @@ mod tests {
 
         assert_eq!(
             FirewallOption::new("--not-exists", "8.8.8.8"),
-            Err(FirewallError::UnknownOption)
+            Err(FirewallError::UnknownOption("--not-exists"))
         );
     }
 
@@ -238,7 +238,7 @@ mod tests {
 
         assert_eq!(
             FirewallRule::new("ACCEPT OUT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3"),
-            Err(FirewallError::InvalidDirection)
+            Err(FirewallError::InvalidDirection("ACCEPT"))
         );
 
         assert_eq!(
@@ -271,12 +271,12 @@ mod tests {
 
         assert_eq!(
             FirewallRule::new("UP ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3"),
-            Err(FirewallError::InvalidDirection)
+            Err(FirewallError::InvalidDirection("UP"))
         );
 
         assert_eq!(
             FirewallRule::new("OUT PUTAWAY --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3"),
-            Err(FirewallError::InvalidAction)
+            Err(FirewallError::InvalidAction("PUTAWAY"))
         );
     }
 

@@ -32,7 +32,9 @@ impl FirewallRule {
             if let Some(option_str) = option {
                 let firewall_option = FirewallOption::new(
                     option_str,
-                    parts.next().ok_or(FirewallError::EmptyOption)?,
+                    parts
+                        .next()
+                        .ok_or(FirewallError::EmptyOption(option_str.to_owned()))?,
                 )?;
                 options.push(firewall_option);
             } else {
@@ -68,7 +70,9 @@ impl FirewallRule {
         // check there is no duplicate options
         for option in options {
             if options_map.insert(option.to_option_str(), option).is_some() {
-                return Err(FirewallError::DuplicatedOption);
+                return Err(FirewallError::DuplicatedOption(
+                    option.to_option_str().to_owned(),
+                ));
             }
         }
 

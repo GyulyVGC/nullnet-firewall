@@ -15,8 +15,8 @@ impl PortCollection {
 
     pub(crate) fn new(opt: &str, str: &str) -> Result<Self, FirewallError> {
         let err = match opt {
-            FirewallOption::DPORT => FirewallError::InvalidDportValue,
-            FirewallOption::SPORT => FirewallError::InvalidSportValue,
+            FirewallOption::DPORT => FirewallError::InvalidDportValue(str.to_owned()),
+            FirewallOption::SPORT => FirewallError::InvalidSportValue(str.to_owned()),
             _ => panic!("Should not happen!"),
         };
         let mut ports = Vec::new();
@@ -27,16 +27,18 @@ impl PortCollection {
             if object.contains(Self::RANGE_SEPARATOR) {
                 // port range
                 let mut subparts = object.split(Self::RANGE_SEPARATOR);
-                let (lower_bound, upper_bound) =
-                    (subparts.next().ok_or(err)?, subparts.next().ok_or(err)?);
+                let (lower_bound, upper_bound) = (
+                    subparts.next().ok_or(err.clone())?,
+                    subparts.next().ok_or(err.clone())?,
+                );
                 let range = RangeInclusive::new(
-                    u16::from_str(lower_bound).map_err(|_| err)?,
-                    u16::from_str(upper_bound).map_err(|_| err)?,
+                    u16::from_str(lower_bound).map_err(|_| err.clone())?,
+                    u16::from_str(upper_bound).map_err(|_| err.clone())?,
                 );
                 ranges.push(range);
             } else {
                 // individual port
-                let port = u16::from_str(object).map_err(|_| err)?;
+                let port = u16::from_str(object).map_err(|_| err.clone())?;
                 ports.push(port);
             }
         }

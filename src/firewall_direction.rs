@@ -26,7 +26,7 @@ impl FromStr for FirewallDirection {
         match s {
             "IN" => Ok(Self::In),
             "OUT" => Ok(Self::Out),
-            _ => Err(FirewallError::InvalidDirection),
+            x => Err(FirewallError::InvalidDirection(x.to_owned())),
         }
     }
 }

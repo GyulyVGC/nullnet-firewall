@@ -36,18 +36,20 @@ impl FirewallOption {
                 Self::Dport(PortCollection::new(FirewallOption::DPORT, value)?)
             }
             FirewallOption::ICMPTYPE => Self::IcmpType(
-                u8::from_str(value).map_err(|_| FirewallError::InvalidIcmpTypeValue)?,
+                u8::from_str(value)
+                    .map_err(|_| FirewallError::InvalidIcmpTypeValue(value.to_owned()))?,
             ),
-            FirewallOption::PROTO => {
-                Self::Proto(u8::from_str(value).map_err(|_| FirewallError::InvalidProtocolValue)?)
-            }
+            FirewallOption::PROTO => Self::Proto(
+                u8::from_str(value)
+                    .map_err(|_| FirewallError::InvalidProtocolValue(value.to_owned()))?,
+            ),
             FirewallOption::SOURCE => {
                 Self::Source(IpCollection::new(FirewallOption::SOURCE, value)?)
             }
             FirewallOption::SPORT => {
                 Self::Sport(PortCollection::new(FirewallOption::SPORT, value)?)
             }
-            _ => return Err(FirewallError::UnknownOption),
+            x => return Err(FirewallError::UnknownOption(x.to_owned())),
         })
     }
 
