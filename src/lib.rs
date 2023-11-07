@@ -106,19 +106,8 @@ mod tests {
     const TEST_FILE_2: &str = "./samples/firewall_for_tests_2.txt";
     const TEST_FILE_3: &str = "./samples/firewall_for_tests_3.txt";
 
-    /// File is placed in examples/firewall_for_tests_1.txt and its content is the following:
-    /// OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080
-    /// OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080 --dport 1,2,2000
-    /// OUT DENY --source 192.168.200.135-192.168.200.140 --sport 6700:6800,8080 --dport 1,2,2000
-    /// OUT REJECT --source 192.168.200.135 --sport 6750:6800,8080 --dest 192.168.200.21 --dport 1,2,2000
-    /// IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1
-    /// IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8
-    /// IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 9
-    /// IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 58 --icmp-type 8
-    /// OUT REJECT
-    /// IN ACCEPT
     #[test]
-    fn test_new_firewall_from_file() {
+    fn test_new_firewall_from_file_1() {
         let rules = vec![
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080").unwrap(),
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080 --dport 1,2,2000").unwrap(),
@@ -149,7 +138,7 @@ mod tests {
     }
 
     #[test]
-    fn test_determine_action_for_packet_1() {
+    fn test_firewall_determine_action_for_packets_file_1() {
         let firewall = Firewall::new(TEST_FILE_1).unwrap();
 
         // tcp packet
@@ -184,7 +173,7 @@ mod tests {
     }
 
     #[test]
-    fn test_determine_action_for_packet_2() {
+    fn test_firewall_determine_action_for_packets_file_2() {
         let mut firewall = Firewall::new(TEST_FILE_2).unwrap();
         firewall.set_policy_in(FirewallAction::Deny);
         firewall.set_policy_out(FirewallAction::Accept);
@@ -221,8 +210,8 @@ mod tests {
     }
 
     #[test]
-    fn test_determine_action_for_packet_3() {
-        let firewall = Firewall::new(TEST_FILE_3).unwrap();
+    fn test_firewall_determine_action_for_packets_file_3() {
+        let mut firewall = Firewall::new(TEST_FILE_3).unwrap();
 
         // ipv6 packet
         assert_eq!(
@@ -233,10 +222,44 @@ mod tests {
             firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::Out),
             FirewallAction::Deny
         );
+
+        // tcp packet
+        assert_eq!(
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::In),
+            FirewallAction::default()
+        );
+        assert_eq!(
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::Out),
+            FirewallAction::default()
+        );
+
+        // change default policies
+        firewall.set_policy_in(FirewallAction::Deny);
+        firewall.set_policy_out(FirewallAction::Accept);
+
+        // ipv6 packet
+        assert_eq!(
+            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::In),
+            FirewallAction::Reject
+        );
+        assert_eq!(
+            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::Out),
+            FirewallAction::Deny
+        );
+
+        // tcp packet
+        assert_eq!(
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::In),
+            FirewallAction::Deny
+        );
+        assert_eq!(
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::Out),
+            FirewallAction::Accept
+        );
     }
 
     #[test]
-    fn test_determine_action_for_packet_with_firewall_disabled() {
+    fn test_firewall_determine_action_for_packets_while_disabled() {
         let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
         firewall.set_policy_in(FirewallAction::Reject); // doesn't matter
         firewall.set_policy_out(FirewallAction::Reject); // doesn't matter
