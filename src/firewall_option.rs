@@ -31,9 +31,7 @@ impl FirewallOption {
 
     pub(crate) fn new(option: &str, value: &str) -> Result<Self, FirewallError> {
         Ok(match option {
-            FirewallOption::DEST => {
-                Self::Dest(IpCollection::new(value, FirewallError::InvalidDestValue)?)
-            }
+            FirewallOption::DEST => Self::Dest(IpCollection::new(FirewallOption::DEST, value)?),
             FirewallOption::DPORT => {
                 Self::Dport(PortCollection::new(FirewallOption::DPORT, value)?)
             }
@@ -44,7 +42,7 @@ impl FirewallOption {
                 Self::Proto(u8::from_str(value).map_err(|_| FirewallError::InvalidProtocolValue)?)
             }
             FirewallOption::SOURCE => {
-                Self::Source(IpCollection::new(value, FirewallError::InvalidSourceValue)?)
+                Self::Source(IpCollection::new(FirewallOption::SOURCE, value)?)
             }
             FirewallOption::SPORT => {
                 Self::Sport(PortCollection::new(FirewallOption::SPORT, value)?)

@@ -104,132 +104,10 @@ mod tests {
     };
     use crate::Firewall;
     use crate::{FirewallAction, FirewallDirection, FirewallError, FirewallRule};
-    use std::net::IpAddr;
-    use std::ops::RangeInclusive;
-    use std::str::FromStr;
 
     const TEST_FILE_1: &str = "./samples/firewall_for_tests_1.txt";
     const TEST_FILE_2: &str = "./samples/firewall_for_tests_2.txt";
     const TEST_FILE_3: &str = "./samples/firewall_for_tests_3.txt";
-
-    #[test]
-    fn test_new_ip_collections() {
-        assert_eq!(
-            IpCollection::new("1.1.1.1,2.2.2.2", FirewallError::InvalidSourceValue).unwrap(),
-            IpCollection {
-                ips: vec![
-                    IpAddr::from_str("1.1.1.1").unwrap(),
-                    IpAddr::from_str("2.2.2.2").unwrap()
-                ],
-                ranges: vec![]
-            }
-        );
-
-        assert_eq!(
-            IpCollection::new(
-                "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
-                FirewallError::InvalidSourceValue
-            )
-            .unwrap(),
-            IpCollection {
-                ips: vec![
-                    IpAddr::from_str("1.1.1.1").unwrap(),
-                    IpAddr::from_str("2.2.2.2").unwrap(),
-                    IpAddr::from_str("9.9.9.9").unwrap()
-                ],
-                ranges: vec![
-                    RangeInclusive::new(
-                        IpAddr::from_str("3.3.3.3").unwrap(),
-                        IpAddr::from_str("5.5.5.5").unwrap()
-                    ),
-                    RangeInclusive::new(
-                        IpAddr::from_str("10.0.0.1").unwrap(),
-                        IpAddr::from_str("10.0.0.255").unwrap()
-                    )
-                ]
-            }
-        );
-
-        assert_eq!(
-            IpCollection::new(
-                "aaaa::ffff,bbbb::1-cccc::2",
-                FirewallError::InvalidSourceValue
-            )
-            .unwrap(),
-            IpCollection {
-                ips: vec![IpAddr::from_str("aaaa::ffff").unwrap(),],
-                ranges: vec![RangeInclusive::new(
-                    IpAddr::from_str("bbbb::1").unwrap(),
-                    IpAddr::from_str("cccc::2").unwrap()
-                )]
-            }
-        );
-
-        assert_eq!(
-            IpCollection::new(
-                "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9",
-                FirewallError::InvalidSourceValue
-            ),
-            Err(FirewallError::InvalidSourceValue)
-        );
-
-        assert_eq!(
-            IpCollection::new(
-                "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9",
-                FirewallError::InvalidDestValue
-            ),
-            Err(FirewallError::InvalidDestValue)
-        );
-    }
-
-    #[test]
-    fn test_ip_collection_contains() {
-        let collection = IpCollection::new(
-            "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
-            FirewallError::InvalidDestValue,
-        )
-        .unwrap();
-        assert!(collection.contains(Some(IpAddr::from_str("2.2.2.2").unwrap())));
-        assert!(collection.contains(Some(IpAddr::from_str("4.0.0.0").unwrap())));
-        assert!(collection.contains(Some(IpAddr::from_str("9.9.9.9").unwrap())));
-        assert!(collection.contains(Some(IpAddr::from_str("10.0.0.1").unwrap())));
-        assert!(collection.contains(Some(IpAddr::from_str("10.0.0.128").unwrap())));
-        assert!(collection.contains(Some(IpAddr::from_str("10.0.0.255").unwrap())));
-        assert!(!collection.contains(None));
-        assert!(!collection.contains(Some(IpAddr::from_str("10.0.0.0").unwrap())));
-        assert!(!collection.contains(Some(IpAddr::from_str("2.2.2.1").unwrap())));
-    }
-
-    #[test]
-    fn test_ip_collection_contains_ipv6() {
-        let collection =
-            IpCollection::new("2001:db8:1234:0000:0000:0000:0000:0000-2001:db8:1234:ffff:ffff:ffff:ffff:ffff,daa::aad,caa::aac", FirewallError::InvalidDestValue).unwrap();
-        assert!(collection.contains(Some(
-            IpAddr::from_str("2001:db8:1234:0000:0000:0000:0000:0000").unwrap()
-        )));
-        assert!(collection.contains(Some(
-            IpAddr::from_str("2001:db8:1234:ffff:ffff:ffff:ffff:ffff").unwrap()
-        )));
-        assert!(collection.contains(Some(
-            IpAddr::from_str("2001:db8:1234:ffff:ffff:ffff:ffff:eeee").unwrap()
-        )));
-        assert!(collection.contains(Some(
-            IpAddr::from_str("2001:db8:1234:aaaa:ffff:ffff:ffff:eeee").unwrap()
-        )));
-        assert!(collection.contains(Some(IpAddr::from_str("daa::aad").unwrap())));
-        assert!(collection.contains(Some(IpAddr::from_str("caa::aac").unwrap())));
-        assert!(!collection.contains(Some(
-            IpAddr::from_str("2000:db8:1234:0000:0000:0000:0000:0000").unwrap()
-        )));
-        assert!(!collection.contains(Some(
-            IpAddr::from_str("2001:db8:1235:ffff:ffff:ffff:ffff:ffff").unwrap()
-        )));
-        assert!(!collection.contains(Some(
-            IpAddr::from_str("2001:eb8:1234:ffff:ffff:ffff:ffff:eeee").unwrap()
-        )));
-        assert!(!collection.contains(Some(IpAddr::from_str("da::aad").unwrap())));
-        assert!(!collection.contains(Some(IpAddr::from_str("caa::aab").unwrap())));
-    }
 
     #[test]
     fn test_new_firewall_options() {
@@ -241,8 +119,8 @@ mod tests {
             .unwrap(),
             FirewallOption::Dest(
                 IpCollection::new(
-                    "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
-                    FirewallError::InvalidDestValue
+                    FirewallOption::DEST,
+                    "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9"
                 )
                 .unwrap()
             )
@@ -254,7 +132,8 @@ mod tests {
                 "2001:db8:1234:0000:0000:0000:0000:0000-2001:db8:1234:ffff:ffff:ffff:ffff:ffff,daa::aad,caa::aac"
             ).unwrap(),
             FirewallOption::Dest(IpCollection::new(
-                "2001:db8:1234:0000:0000:0000:0000:0000-2001:db8:1234:ffff:ffff:ffff:ffff:ffff,daa::aad,caa::aac", FirewallError::InvalidDestValue
+                FirewallOption::DEST,
+                "2001:db8:1234:0000:0000:0000:0000:0000-2001:db8:1234:ffff:ffff:ffff:ffff:ffff,daa::aad,caa::aac"
             ).unwrap())
         );
 
@@ -283,8 +162,8 @@ mod tests {
             .unwrap(),
             FirewallOption::Source(
                 IpCollection::new(
-                    "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
-                    FirewallError::InvalidSourceValue
+                    FirewallOption::SOURCE,
+                    "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9"
                 )
                 .unwrap()
             )
@@ -313,8 +192,7 @@ mod tests {
                 action: FirewallAction::Accept,
                 options: vec![
                     FirewallOption::Source(
-                        IpCollection::new("8.8.8.8,7.7.7.7", FirewallError::InvalidSourceValue)
-                            .unwrap()
+                        IpCollection::new(FirewallOption::SOURCE, "8.8.8.8,7.7.7.7").unwrap()
                     ),
                     FirewallOption::Dport(
                         PortCollection::new(FirewallOption::DPORT, "900:1000,1,2,3").unwrap()
@@ -329,7 +207,7 @@ mod tests {
                 direction: FirewallDirection::Out,
                 action: FirewallAction::Reject,
                 options: vec![
-                    FirewallOption::Source(IpCollection::new("8.8.8.8,7.7.7.7", FirewallError::InvalidSourceValue).unwrap()),
+                    FirewallOption::Source(IpCollection::new(FirewallOption::SOURCE, "8.8.8.8,7.7.7.7").unwrap()),
                     FirewallOption::Dport(PortCollection::new(FirewallOption::DPORT, "900:1000,1,2,3").unwrap()),
                     FirewallOption::IcmpType(8),
                     FirewallOption::Proto(1)
@@ -347,8 +225,7 @@ mod tests {
                 action: FirewallAction::Deny,
                 options: vec![
                     FirewallOption::Dest(
-                        IpCollection::new("8.8.8.8,7.7.7.7", FirewallError::InvalidDestValue)
-                            .unwrap()
+                        IpCollection::new(FirewallOption::DEST, "8.8.8.8,7.7.7.7").unwrap()
                     ),
                     FirewallOption::Sport(
                         PortCollection::new(FirewallOption::SPORT, "900:1000,1,2,3").unwrap()
