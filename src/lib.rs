@@ -8,7 +8,8 @@ mod ip_collection;
 mod port_collection;
 mod raw_packets;
 
-use crate::fields::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
+use crate::fields::ip_header::{get_dest, get_proto, get_source};
+use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
 use crate::firewall_action::FirewallAction;
 use crate::firewall_direction::FirewallDirection;
 use crate::firewall_error::FirewallError;
