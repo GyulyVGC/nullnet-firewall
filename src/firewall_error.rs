@@ -12,9 +12,9 @@ pub enum FirewallError {
     InvalidDirection(String),
     InvalidAction(String),
     UnknownOption(String),
-    NotEnoughArguments,
     EmptyOption(String),
     DuplicatedOption(String),
+    NotEnoughArguments,
     NotApplicableIcmpType,
 }
 
@@ -50,7 +50,7 @@ impl Display for FirewallError {
             }
             FirewallError::InvalidAction(action) => format!("incorrect action '{action}'"),
             FirewallError::UnknownOption(opt) => {
-                format!("the specified option doesn't exist '{opt}'")
+                format!("the specified option '{opt}' doesn't exist")
             }
             FirewallError::NotEnoughArguments => {
                 "not enough arguments supplied for rule".to_string()
