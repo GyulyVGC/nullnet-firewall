@@ -113,57 +113,6 @@ mod tests {
     const TEST_FILE_3: &str = "./samples/firewall_for_tests_3.txt";
 
     #[test]
-    fn test_new_port_collections() {
-        assert_eq!(
-            PortCollection::new("1,2,3,4,999", FirewallError::InvalidSportValue).unwrap(),
-            PortCollection {
-                ports: vec![1, 2, 3, 4, 999],
-                ranges: vec![]
-            }
-        );
-
-        assert_eq!(
-            PortCollection::new("1,2,3,4,900:999", FirewallError::InvalidSportValue).unwrap(),
-            PortCollection {
-                ports: vec![1, 2, 3, 4],
-                ranges: vec![900..=999]
-            }
-        );
-
-        assert_eq!(
-            PortCollection::new("1:999", FirewallError::InvalidSportValue).unwrap(),
-            PortCollection {
-                ports: vec![],
-                ranges: vec![1..=999]
-            }
-        );
-
-        assert_eq!(
-            PortCollection::new("1,2,10:20,3,4,999:1200", FirewallError::InvalidSportValue)
-                .unwrap(),
-            PortCollection {
-                ports: vec![1, 2, 3, 4],
-                ranges: vec![10..=20, 999..=1200]
-            }
-        );
-
-        assert_eq!(
-            PortCollection::new("1,2,10:20,3,4,:1200", FirewallError::InvalidSportValue),
-            Err(FirewallError::InvalidSportValue)
-        );
-
-        assert_eq!(
-            PortCollection::new("1,2,10:20,3,4,999-1200", FirewallError::InvalidSportValue),
-            Err(FirewallError::InvalidSportValue)
-        );
-
-        assert_eq!(
-            PortCollection::new("1,2,10:20,3,4,999-1200,", FirewallError::InvalidDportValue),
-            Err(FirewallError::InvalidDportValue)
-        );
-    }
-
-    #[test]
     fn test_new_ip_collections() {
         assert_eq!(
             IpCollection::new("1.1.1.1,2.2.2.2", FirewallError::InvalidSourceValue).unwrap(),
@@ -231,21 +180,6 @@ mod tests {
             ),
             Err(FirewallError::InvalidDestValue)
         );
-    }
-
-    #[test]
-    fn test_port_collection_contains() {
-        let collection =
-            PortCollection::new("1,2,25:30", FirewallError::InvalidDportValue).unwrap();
-        assert!(collection.contains(Some(1)));
-        assert!(collection.contains(Some(2)));
-        assert!(collection.contains(Some(25)));
-        assert!(collection.contains(Some(27)));
-        assert!(collection.contains(Some(30)));
-        assert!(!collection.contains(None));
-        assert!(!collection.contains(Some(24)));
-        assert!(!collection.contains(Some(31)));
-        assert!(!collection.contains(Some(8080)));
     }
 
     #[test]
@@ -327,8 +261,7 @@ mod tests {
         assert_eq!(
             FirewallOption::new("--dport", "1,2,10:20,3,4,999:1200").unwrap(),
             FirewallOption::Dport(
-                PortCollection::new("1,2,10:20,3,4,999:1200", FirewallError::InvalidDportValue)
-                    .unwrap()
+                PortCollection::new(FirewallOption::DPORT, "1,2,10:20,3,4,999:1200").unwrap()
             )
         );
 
@@ -360,8 +293,7 @@ mod tests {
         assert_eq!(
             FirewallOption::new("--sport", "1,2,10:20,3,4,999:1200").unwrap(),
             FirewallOption::Sport(
-                PortCollection::new("1,2,10:20,3,4,999:1200", FirewallError::InvalidSportValue)
-                    .unwrap()
+                PortCollection::new(FirewallOption::SPORT, "1,2,10:20,3,4,999:1200").unwrap()
             )
         );
 
@@ -385,8 +317,7 @@ mod tests {
                             .unwrap()
                     ),
                     FirewallOption::Dport(
-                        PortCollection::new("900:1000,1,2,3", FirewallError::InvalidDportValue)
-                            .unwrap()
+                        PortCollection::new(FirewallOption::DPORT, "900:1000,1,2,3").unwrap()
                     )
                 ]
             }
@@ -399,7 +330,7 @@ mod tests {
                 action: FirewallAction::Reject,
                 options: vec![
                     FirewallOption::Source(IpCollection::new("8.8.8.8,7.7.7.7", FirewallError::InvalidSourceValue).unwrap()),
-                    FirewallOption::Dport(PortCollection::new("900:1000,1,2,3", FirewallError::InvalidDportValue).unwrap()),
+                    FirewallOption::Dport(PortCollection::new(FirewallOption::DPORT, "900:1000,1,2,3").unwrap()),
                     FirewallOption::IcmpType(8),
                     FirewallOption::Proto(1)
                 ]
@@ -420,8 +351,7 @@ mod tests {
                             .unwrap()
                     ),
                     FirewallOption::Sport(
-                        PortCollection::new("900:1000,1,2,3", FirewallError::InvalidSportValue)
-                            .unwrap()
+                        PortCollection::new(FirewallOption::SPORT, "900:1000,1,2,3").unwrap()
                     ),
                     FirewallOption::IcmpType(1),
                     FirewallOption::Proto(58)

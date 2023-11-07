@@ -22,22 +22,21 @@ pub(crate) enum FirewallOption {
 }
 
 impl FirewallOption {
-    const DEST: &'static str = "--dest";
-    const DPORT: &'static str = "--dport";
+    pub(crate) const DEST: &'static str = "--dest";
+    pub(crate) const DPORT: &'static str = "--dport";
     pub(crate) const ICMPTYPE: &'static str = "--icmp-type";
     pub(crate) const PROTO: &'static str = "--proto";
-    const SOURCE: &'static str = "--source";
-    const SPORT: &'static str = "--sport";
+    pub(crate) const SOURCE: &'static str = "--source";
+    pub(crate) const SPORT: &'static str = "--sport";
 
     pub(crate) fn new(option: &str, value: &str) -> Result<Self, FirewallError> {
         Ok(match option {
             FirewallOption::DEST => {
                 Self::Dest(IpCollection::new(value, FirewallError::InvalidDestValue)?)
             }
-            FirewallOption::DPORT => Self::Dport(PortCollection::new(
-                value,
-                FirewallError::InvalidDportValue,
-            )?),
+            FirewallOption::DPORT => {
+                Self::Dport(PortCollection::new(FirewallOption::DPORT, value)?)
+            }
             FirewallOption::ICMPTYPE => Self::IcmpType(
                 u8::from_str(value).map_err(|_| FirewallError::InvalidIcmpTypeValue)?,
             ),
@@ -47,10 +46,9 @@ impl FirewallOption {
             FirewallOption::SOURCE => {
                 Self::Source(IpCollection::new(value, FirewallError::InvalidSourceValue)?)
             }
-            FirewallOption::SPORT => Self::Sport(PortCollection::new(
-                value,
-                FirewallError::InvalidSportValue,
-            )?),
+            FirewallOption::SPORT => {
+                Self::Sport(PortCollection::new(FirewallOption::SPORT, value)?)
+            }
             _ => return Err(FirewallError::UnknownOption),
         })
     }
