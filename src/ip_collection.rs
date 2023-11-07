@@ -1,7 +1,7 @@
+use crate::FirewallError;
 use std::net::IpAddr;
 use std::ops::RangeInclusive;
 use std::str::FromStr;
-use crate::FirewallError;
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct IpCollection {
@@ -17,11 +17,11 @@ impl IpCollection {
         let mut ips = Vec::new();
         let mut ranges = Vec::new();
 
-        let parts: Vec<&str> = str.split(Self::SEPARATOR).collect();
-        for part in parts {
-            if part.contains(Self::RANGE_SEPARATOR) {
+        let objects: Vec<&str> = str.split(Self::SEPARATOR).collect();
+        for object in objects {
+            if object.contains(Self::RANGE_SEPARATOR) {
                 // IP range
-                let mut subparts = part.split(Self::RANGE_SEPARATOR);
+                let mut subparts = object.split(Self::RANGE_SEPARATOR);
                 let (lower_bound, upper_bound) =
                     (subparts.next().ok_or(err)?, subparts.next().ok_or(err)?);
                 let range = RangeInclusive::new(
@@ -31,7 +31,7 @@ impl IpCollection {
                 ranges.push(range);
             } else {
                 // individual IP
-                let ip = IpAddr::from_str(part).map_err(|_| err)?;
+                let ip = IpAddr::from_str(object).map_err(|_| err)?;
                 ips.push(ip);
             }
         }

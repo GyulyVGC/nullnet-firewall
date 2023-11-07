@@ -74,10 +74,8 @@ pub fn get_icmp_type(transport_header: Option<TransportHeader>) -> Option<u8> {
 
 #[cfg(test)]
 mod tests {
-    use crate::fields::{
-        get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport,
-    };
-    use crate::raw_packets::{ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
+    use crate::fields::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
+    use crate::raw_packets::test_packets::{ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
     use etherparse::PacketHeaders;
     use std::net::IpAddr;
     use std::str::FromStr;

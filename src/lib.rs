@@ -1,20 +1,20 @@
-mod raw_packets;
 mod fields;
-mod firewall_direction;
 mod firewall_action;
+mod firewall_direction;
 mod firewall_error;
-mod port_collection;
-mod ip_collection;
 mod firewall_option;
 mod firewall_rule;
+mod ip_collection;
+mod port_collection;
+mod raw_packets;
 
 use crate::fields::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
-use std::fs::File;
-use std::io::{BufRead, BufReader};
 use crate::firewall_action::FirewallAction;
 use crate::firewall_direction::FirewallDirection;
 use crate::firewall_error::FirewallError;
 use crate::firewall_rule::FirewallRule;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 /// The firewall of our driver
 #[derive(Debug, Eq, PartialEq, Default)]
@@ -57,6 +57,7 @@ impl Firewall {
         self.policy_out = policy;
     }
 
+    #[must_use]
     pub fn determine_action_for_packet(
         &self,
         packet: &[u8],
@@ -96,17 +97,15 @@ impl Firewall {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        FirewallAction, FirewallDirection, FirewallError, FirewallRule,
-    };
-    use crate::raw_packets::{ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
-    use crate::Firewall;
-    use std::net::IpAddr;
-    use std::ops::RangeInclusive;
-    use std::str::FromStr;
     use crate::firewall_option::FirewallOption;
     use crate::ip_collection::IpCollection;
     use crate::port_collection::PortCollection;
+    use crate::raw_packets::test_packets::{ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
+    use crate::Firewall;
+    use crate::{FirewallAction, FirewallDirection, FirewallError, FirewallRule};
+    use std::net::IpAddr;
+    use std::ops::RangeInclusive;
+    use std::str::FromStr;
 
     const TEST_FILE_1: &str = "./samples/firewall_for_tests_1.txt";
     const TEST_FILE_2: &str = "./samples/firewall_for_tests_2.txt";
@@ -181,7 +180,7 @@ mod tests {
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
                 FirewallError::InvalidSourceValue
             )
-                .unwrap(),
+            .unwrap(),
             IpCollection {
                 ips: vec![
                     IpAddr::from_str("1.1.1.1").unwrap(),
@@ -206,7 +205,7 @@ mod tests {
                 "aaaa::ffff,bbbb::1-cccc::2",
                 FirewallError::InvalidSourceValue
             )
-                .unwrap(),
+            .unwrap(),
             IpCollection {
                 ips: vec![IpAddr::from_str("aaaa::ffff").unwrap(),],
                 ranges: vec![RangeInclusive::new(
@@ -254,7 +253,7 @@ mod tests {
             "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
             FirewallError::InvalidDestValue,
         )
-            .unwrap();
+        .unwrap();
         assert!(collection.contains(Some(IpAddr::from_str("2.2.2.2").unwrap())));
         assert!(collection.contains(Some(IpAddr::from_str("4.0.0.0").unwrap())));
         assert!(collection.contains(Some(IpAddr::from_str("9.9.9.9").unwrap())));
@@ -304,13 +303,13 @@ mod tests {
                 "--dest",
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9"
             )
-                .unwrap(),
+            .unwrap(),
             FirewallOption::Dest(
                 IpCollection::new(
                     "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
                     FirewallError::InvalidDestValue
                 )
-                    .unwrap()
+                .unwrap()
             )
         );
 
@@ -347,13 +346,13 @@ mod tests {
                 "--source",
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9"
             )
-                .unwrap(),
+            .unwrap(),
             FirewallOption::Source(
                 IpCollection::new(
                     "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
                     FirewallError::InvalidSourceValue
                 )
-                    .unwrap()
+                .unwrap()
             )
         );
 
@@ -410,7 +409,7 @@ mod tests {
             FirewallRule::new(
                 "IN DENY --dest 8.8.8.8,7.7.7.7 --sport 900:1000,1,2,3 --icmp-type 1 --proto 58"
             )
-                .unwrap(),
+            .unwrap(),
             FirewallRule {
                 direction: FirewallDirection::In,
                 action: FirewallAction::Deny,
@@ -546,19 +545,19 @@ mod tests {
             "--dest",
             "3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:900",
         )
-            .unwrap();
+        .unwrap();
         let range_dest_ko = FirewallOption::new(
             "--dest",
             "3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:8bf",
         )
-            .unwrap();
+        .unwrap();
         let range_source_ok =
             FirewallOption::new("--source", "3ffe:501:4819::35-3ffe:501:4819::45").unwrap();
         let range_source_ok_2 = FirewallOption::new(
             "--source",
             "3ffe:501:4819::31-3ffe:501:4819::41,3ffe:501:4819::42",
         )
-            .unwrap();
+        .unwrap();
         let range_source_ko =
             FirewallOption::new("--source", "3ffe:501:4819::31-3ffe:501:4819::41").unwrap();
         let dport_ok = FirewallOption::new("--dport", "2396").unwrap();
@@ -692,13 +691,13 @@ mod tests {
         let rule_5_ok_out = FirewallRule::new(
             "OUT ACCEPT --dest 3ffe:507:0:1:200:86ff:fe05:8da --proto 17 --sport 545:560,43,53",
         )
-            .unwrap();
+        .unwrap();
         assert!(rule_5_ok_out.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::Out));
         assert!(!rule_5_ok_out.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::In));
         let rule_6_ko = FirewallRule::new(
             "OUT ACCEPT --dest 3ffe:507:0:1:200:86ff:fe05:8da --proto 17 --sport 545:560,43,52",
         )
-            .unwrap();
+        .unwrap();
         assert!(!rule_6_ko.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::Out));
         assert!(!rule_6_ko.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::In));
         let rule_9_ok_in =

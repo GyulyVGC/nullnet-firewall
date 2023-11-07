@@ -1,8 +1,8 @@
-use std::str::FromStr;
-use etherparse::PacketHeaders;
-use crate::{FirewallError, get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
 use crate::ip_collection::IpCollection;
 use crate::port_collection::PortCollection;
+use crate::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport, FirewallError};
+use etherparse::PacketHeaders;
+use std::str::FromStr;
 
 /// Options associated to a specific firewall rule
 #[derive(Debug, Eq, PartialEq)]
@@ -38,9 +38,9 @@ impl FirewallOption {
                 value,
                 FirewallError::InvalidDportValue,
             )?),
-            FirewallOption::ICMPTYPE => {
-                Self::IcmpType(u8::from_str(value).map_err(|_| FirewallError::InvalidIcmpTypeValue)?)
-            }
+            FirewallOption::ICMPTYPE => Self::IcmpType(
+                u8::from_str(value).map_err(|_| FirewallError::InvalidIcmpTypeValue)?,
+            ),
             FirewallOption::PROTO => {
                 Self::Proto(u8::from_str(value).map_err(|_| FirewallError::InvalidProtocolValue)?)
             }

@@ -1,6 +1,6 @@
+use crate::FirewallError;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use crate::FirewallError;
 
 #[derive(Default, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum FirewallAction {
