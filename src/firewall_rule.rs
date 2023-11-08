@@ -6,8 +6,11 @@ use std::str::FromStr;
 /// A firewall rule
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct FirewallRule {
+    /// Direction associated with the rule
     pub(crate) direction: FirewallDirection,
+    /// Action associated with the rule
     pub(crate) action: FirewallAction,
+    /// Rule options
     pub(crate) options: Vec<FirewallOption>,
 }
 

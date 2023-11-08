@@ -1,5 +1,5 @@
-/// Packets are taken from wireshark sample captures available at <https://wiki.wireshark.org/SampleCaptures>
-/// These data are mainly used for testing purposes
+//! Packets are taken from wireshark sample captures available at <https://wiki.wireshark.org/SampleCaptures>
+//! These data are only used for testing purposes
 
 #[cfg(test)]
 pub(crate) mod test_packets {
