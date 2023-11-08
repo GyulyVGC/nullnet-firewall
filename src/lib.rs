@@ -18,7 +18,10 @@ use crate::firewall_rule::FirewallRule;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-/// The firewall of our driver
+/// Object embedding a collection of firewall rules and policies to determine
+/// the action to be taken for a given network packet.
+///
+/// A new `Firewall` can be created from a textual file listing a set of rule.
 #[derive(Debug, Eq, PartialEq, Default)]
 pub struct Firewall {
     rules: Vec<FirewallRule>,
@@ -28,7 +31,39 @@ pub struct Firewall {
 }
 
 impl Firewall {
-    /// Ciao
+    /// Instantiates a new [`Firewall`] from a file.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - The path of a file defining the firewall rules.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`FirewallError`] if the rules defined in the file are not properly formatted.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if the supplied `file_path` does not exist or the user does not have
+    /// permission to read it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::Firewall;
+    ///
+    /// let firewall = Firewall::new("./samples/firewall.txt").unwrap();
+    /// ```
+    ///
+    /// Sample file content:
+    ///
+    /// ``` txt
+    /// OUT REJECT --source 8.8.8.8 --sport 6700:6800,8080
+    /// OUT DENY --source 192.168.200.0-192.168.200.255 --sport 6700:6800,8080 --dport 1,2,2000
+    /// IN ACCEPT --source 2.1.1.2,2.1.1.3 --dest 2.1.1.1 --proto 1
+    /// IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8
+    /// OUT REJECT
+    /// IN ACCEPT
+    /// ```
     pub fn new(file_path: &str) -> Result<Self, FirewallError> {
         let mut rules = Vec::new();
         let file = File::open(file_path).unwrap();
@@ -44,23 +79,32 @@ impl Firewall {
         })
     }
 
-    /// Ciao
-    pub fn disable(&mut self) {
-        self.enabled = false;
-    }
-
-    pub fn enable(&mut self) {
-        self.enabled = true;
-    }
-
-    pub fn set_policy_in(&mut self, policy: FirewallAction) {
-        self.policy_in = policy;
-    }
-
-    pub fn set_policy_out(&mut self, policy: FirewallAction) {
-        self.policy_out = policy;
-    }
-
+    /// Returns the action to be taken for a supplied network packet,
+    /// according to rules defined for the [`Firewall`].
+    ///
+    /// # Arguments
+    ///
+    /// * `packet` - Raw network packet data including headers and payload.
+    ///
+    /// * `direction` - The network packet direction (incoming or outgoing).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::{Firewall, FirewallDirection, FirewallAction};
+    ///
+    /// let firewall = Firewall::new("/my/firewall/rules/file.txt").unwrap();
+    ///
+    /// // determine action for packet
+    /// let action = firewall.determine_action_for_packet(&pkt_data, &FirewallDirection::IN);
+    ///
+    /// // act accordingly
+    /// match action {
+    ///     FirewallAction::ACCEPT => {/* ... */}
+    ///     FirewallAction::DENY => {/* ... */}
+    ///     FirewallAction::REJECT => {/* ... */}
+    /// }
+    /// ```
     #[must_use]
     pub fn determine_action_for_packet(
         &self,
@@ -84,6 +128,92 @@ impl Firewall {
             }
         }
         action
+    }
+
+    /// Disables an existing [`Firewall`].
+    ///
+    /// This will make all the network packets be accepted
+    /// regardless of the rules defined for the firewall.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::Firewall;
+    ///
+    /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
+    ///
+    /// // disable the firewall
+    /// firewall.disable();
+    /// ```
+    pub fn disable(&mut self) {
+        self.enabled = false;
+    }
+
+    /// Enables an existing [`Firewall`].
+    ///
+    /// When a new firewall is created, it's enabled by default.
+    ///
+    /// When the firewall is enabled, the actions to take for network packets are determined
+    /// according to the specified rules.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::Firewall;
+    ///
+    /// // a new firewall is enabled by default
+    /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
+    ///
+    /// // disable the firewall
+    /// firewall.disable();
+    ///
+    /// /* ... */
+    ///
+    /// // enable the firewall again
+    /// firewall.enable();
+    /// ```
+    pub fn enable(&mut self) {
+        self.enabled = true;
+    }
+
+    /// Sets the input policy for an existing [`Firewall`].
+    ///
+    /// # Arguments
+    ///
+    /// * `policy` - The policy to use for incoming packets that don't match any of the specified rules.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::{Firewall, FirewallAction};
+    ///
+    /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
+    ///
+    /// // set the firewall input policy
+    /// firewall.set_policy_in(FirewallAction::DENY);
+    /// ```
+    pub fn set_policy_in(&mut self, policy: FirewallAction) {
+        self.policy_in = policy;
+    }
+
+    /// Sets the output policy for an existing [`Firewall`].
+    ///
+    /// # Arguments
+    ///
+    /// * `policy` - The policy to use for outgoing packets that don't match any of the specified rules.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::{Firewall, FirewallAction};
+    ///
+    /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
+    ///
+    /// // set the firewall output policy
+    /// firewall.set_policy_out(FirewallAction::ACCEPT);
+    /// ```
+    pub fn set_policy_out(&mut self, policy: FirewallAction) {
+        self.policy_out = policy;
     }
 }
 
@@ -144,7 +274,9 @@ mod tests {
 
     #[test]
     fn test_firewall_determine_action_for_packets_file_1() {
-        let firewall = Firewall::new(TEST_FILE_1).unwrap();
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        firewall.set_policy_in(FirewallAction::DENY);
+        firewall.set_policy_out(FirewallAction::ACCEPT);
 
         // tcp packet
         assert_eq!(
