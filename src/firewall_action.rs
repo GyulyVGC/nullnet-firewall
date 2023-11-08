@@ -2,20 +2,28 @@ use crate::FirewallError;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
+/// Action dictated by a firewall rule.
+///
+/// Each firewall rule is associated to a given action.
 #[derive(Default, Copy, Clone, Eq, PartialEq, Debug)]
 pub enum FirewallAction {
+    /// Allows traffic that matches the rule to pass.
     #[default]
-    Accept,
-    Deny,
-    Reject,
+    ACCEPT,
+    /// Silently blocks traffic that matches the rule.
+    DENY,
+    /// Blocks traffic that matches the rule.
+    ///
+    /// An *ICMP Destination Unreachable* message should be sent back to the traffic source.
+    REJECT,
 }
 
 impl Display for FirewallAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let str = match self {
-            FirewallAction::Accept => "ACCEPT",
-            FirewallAction::Deny => "DENY",
-            FirewallAction::Reject => "REJECT",
+            FirewallAction::ACCEPT => "ACCEPT",
+            FirewallAction::DENY => "DENY",
+            FirewallAction::REJECT => "REJECT",
         };
 
         write!(f, "{str}")
@@ -27,9 +35,9 @@ impl FromStr for FirewallAction {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "ACCEPT" => Ok(Self::Accept),
-            "DENY" => Ok(Self::Deny),
-            "REJECT" => Ok(Self::Reject),
+            "ACCEPT" => Ok(Self::ACCEPT),
+            "DENY" => Ok(Self::DENY),
+            "REJECT" => Ok(Self::REJECT),
             x => Err(FirewallError::InvalidAction(x.to_owned())),
         }
     }

@@ -1,20 +1,34 @@
 use crate::firewall_option::FirewallOption;
 use std::fmt::{Display, Formatter};
 
+/// Error that may arise as a consequence of an invalid firewall specification.
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FirewallError {
+    /// The value supplied for the option `--dport` is invalid.
     InvalidDportValue(String),
+    /// The value supplied for the option `--sport` is invalid.
     InvalidSportValue(String),
+    /// The value supplied for the option `--dest` is invalid.
     InvalidDestValue(String),
+    /// The value supplied for the option `--source` is invalid.
     InvalidSourceValue(String),
+    /// The value supplied for the option `--icmp-type` is invalid.
     InvalidIcmpTypeValue(String),
+    /// The value supplied for the option `--proto` is invalid.
     InvalidProtocolValue(String),
+    /// An invalid direction has been specified for a firewall rule.
     InvalidDirection(String),
+    /// An invalid action has been specified for a firewall rule.
     InvalidAction(String),
+    /// An unknown option has been specified for a firewall rule.
     UnknownOption(String),
+    /// An empty option has been specified for a firewall rule.
     EmptyOption(String),
+    /// The same option has been specified multiple times for the same firewall rule.
     DuplicatedOption(String),
+    /// Not enough arguments have been specified for a firewall rule.
     NotEnoughArguments,
+    /// The option `--icmp-type` is valid only if `--proto 1` or `--proto 58` is also specified.
     NotApplicableIcmpType,
 }
 
@@ -61,7 +75,7 @@ impl Display for FirewallError {
             }
             FirewallError::NotApplicableIcmpType => {
                 format!(
-                    "option '{}' is only valid if '{} 1' or '{} 58' is also specified",
+                    "option '{}' is valid only if '{} 1' or '{} 58' is also specified",
                     FirewallOption::ICMPTYPE,
                     FirewallOption::PROTO,
                     FirewallOption::PROTO

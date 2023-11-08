@@ -1,3 +1,6 @@
+//! # Title
+//! ### Subtitle
+
 mod fields;
 mod firewall_action;
 mod firewall_direction;
@@ -8,9 +11,9 @@ mod utils;
 
 use crate::fields::ip_header::{get_dest, get_proto, get_source};
 use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
-use crate::firewall_action::FirewallAction;
-use crate::firewall_direction::FirewallDirection;
-use crate::firewall_error::FirewallError;
+pub use crate::firewall_action::FirewallAction;
+pub use crate::firewall_direction::FirewallDirection;
+pub use crate::firewall_error::FirewallError;
 use crate::firewall_rule::FirewallRule;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -25,6 +28,7 @@ pub struct Firewall {
 }
 
 impl Firewall {
+    /// Ciao
     pub fn new(file_path: &str) -> Result<Self, FirewallError> {
         let mut rules = Vec::new();
         let file = File::open(file_path).unwrap();
@@ -40,6 +44,7 @@ impl Firewall {
         })
     }
 
+    /// Ciao
     pub fn disable(&mut self) {
         self.enabled = false;
     }
@@ -63,12 +68,12 @@ impl Firewall {
         direction: &FirewallDirection,
     ) -> FirewallAction {
         if !self.enabled {
-            return FirewallAction::Accept;
+            return FirewallAction::ACCEPT;
         }
 
         let mut action = match direction {
-            FirewallDirection::In => self.policy_in,
-            FirewallDirection::Out => self.policy_out,
+            FirewallDirection::IN => self.policy_in,
+            FirewallDirection::OUT => self.policy_out,
         };
 
         let mut current_specificity = 0;
@@ -130,11 +135,11 @@ mod tests {
         assert_eq!(Firewall::new(TEST_FILE_1).unwrap(), firewall);
 
         firewall.disable();
-        firewall.set_policy_in(FirewallAction::Deny);
-        firewall.set_policy_out(FirewallAction::Reject);
+        firewall.set_policy_in(FirewallAction::DENY);
+        firewall.set_policy_out(FirewallAction::REJECT);
         assert!(!firewall.enabled);
-        assert_eq!(firewall.policy_in, FirewallAction::Deny);
-        assert_eq!(firewall.policy_out, FirewallAction::Reject);
+        assert_eq!(firewall.policy_in, FirewallAction::DENY);
+        assert_eq!(firewall.policy_out, FirewallAction::REJECT);
     }
 
     #[test]
@@ -143,69 +148,69 @@ mod tests {
 
         // tcp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::In),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::IN),
+            FirewallAction::ACCEPT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Deny
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::DENY
         );
 
         // icmp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::In),
-            FirewallAction::Reject
+            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::IN),
+            FirewallAction::REJECT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Reject
+            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::REJECT
         );
 
         // arp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::In),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::IN),
+            FirewallAction::ACCEPT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Reject
+            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::REJECT
         );
     }
 
     #[test]
     fn test_firewall_determine_action_for_packets_file_2() {
         let mut firewall = Firewall::new(TEST_FILE_2).unwrap();
-        firewall.set_policy_in(FirewallAction::Deny);
-        firewall.set_policy_out(FirewallAction::Accept);
+        firewall.set_policy_in(FirewallAction::DENY);
+        firewall.set_policy_out(FirewallAction::ACCEPT);
 
         // tcp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::In),
-            FirewallAction::Deny
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::IN),
+            FirewallAction::DENY
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Deny
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::DENY
         );
 
         // icmp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::In),
-            FirewallAction::Reject
+            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::IN),
+            FirewallAction::REJECT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::ACCEPT
         );
 
         // arp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::In),
-            FirewallAction::Deny
+            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::IN),
+            FirewallAction::DENY
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::ACCEPT
         );
     }
 
@@ -215,84 +220,84 @@ mod tests {
 
         // ipv6 packet
         assert_eq!(
-            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::In),
-            FirewallAction::Reject
+            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN),
+            FirewallAction::REJECT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::Out),
-            FirewallAction::Deny
+            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT),
+            FirewallAction::DENY
         );
 
         // tcp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::In),
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::IN),
             FirewallAction::default()
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::Out),
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::OUT),
             FirewallAction::default()
         );
 
         // change default policies
-        firewall.set_policy_in(FirewallAction::Deny);
-        firewall.set_policy_out(FirewallAction::Accept);
+        firewall.set_policy_in(FirewallAction::DENY);
+        firewall.set_policy_out(FirewallAction::ACCEPT);
 
         // ipv6 packet
         assert_eq!(
-            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::In),
-            FirewallAction::Reject
+            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN),
+            FirewallAction::REJECT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::Out),
-            FirewallAction::Deny
+            firewall.determine_action_for_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT),
+            FirewallAction::DENY
         );
 
         // tcp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::In),
-            FirewallAction::Deny
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::IN),
+            FirewallAction::DENY
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::ACCEPT
         );
     }
 
     #[test]
     fn test_firewall_determine_action_for_packets_while_disabled() {
         let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
-        firewall.set_policy_in(FirewallAction::Reject); // doesn't matter
-        firewall.set_policy_out(FirewallAction::Reject); // doesn't matter
+        firewall.set_policy_in(FirewallAction::REJECT); // doesn't matter
+        firewall.set_policy_out(FirewallAction::REJECT); // doesn't matter
         firewall.disable(); // always accept
 
         // tcp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::In),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::IN),
+            FirewallAction::ACCEPT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&TCP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::ACCEPT
         );
 
         // icmp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::In),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::IN),
+            FirewallAction::ACCEPT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&ICMP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::ACCEPT
         );
 
         // arp packet
         assert_eq!(
-            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::In),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::IN),
+            FirewallAction::ACCEPT
         );
         assert_eq!(
-            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::Out),
-            FirewallAction::Accept
+            firewall.determine_action_for_packet(&ARP_PACKET, &FirewallDirection::OUT),
+            FirewallAction::ACCEPT
         );
     }
 }
