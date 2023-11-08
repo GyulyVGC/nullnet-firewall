@@ -84,7 +84,7 @@ impl Firewall {
     ///
     /// # Arguments
     ///
-    /// * `packet` - Raw network packet data including headers and payload.
+    /// * `packet` - Raw network packet bytes, including headers and payload.
     ///
     /// * `direction` - The network packet direction (incoming or outgoing).
     ///
@@ -93,10 +93,13 @@ impl Firewall {
     /// ```
     /// use nullnet_firewall::{Firewall, FirewallDirection, FirewallAction};
     ///
-    /// let firewall = Firewall::new("/my/firewall/rules/file.txt").unwrap();
+    /// let firewall = Firewall::new("./samples/firewall.txt").unwrap();
     ///
-    /// // determine action for packet
-    /// let action = firewall.determine_action_for_packet(&pkt_data, &FirewallDirection::IN);
+    /// // here we suppose to have a packet to match against the firewall
+    /// let packet = [/* ... */];
+    ///
+    /// // determine action for packet, supposing incoming direction for packet
+    /// let action = firewall.determine_action_for_packet(&packet, &FirewallDirection::IN);
     ///
     /// // act accordingly
     /// match action {
