@@ -1,6 +1,6 @@
 //! **Rust-based firewall for network drivers.**
 //!
-//! # Scope of applicability
+//! # Purpose
 //!
 //! This library is used to match network packets against a set of constraints (here called *firewall rules*)
 //! with the aim of deciding whether to permit or deny incoming/outgoing traffic.
@@ -56,7 +56,7 @@
 //!
 //! In case of invalid firewall configurations, a [`FirewallError`] will be returned.
 //!
-//! # Firewall usage
+//! # Usage
 //!
 //! Once a [`Firewall`] has been defined, it can be used to determine which action to take for each
 //! of the netwrok packets in transit.
@@ -67,6 +67,7 @@
 //! ```
 //! use nullnet_firewall::{Firewall, FirewallDirection, FirewallAction};
 //!
+//! // build the firewall from the rules in a file
 //! let firewall = Firewall::new("./samples/firewall.txt").unwrap();
 //!
 //! // here we suppose to have a packet to match against the firewall
