@@ -1,5 +1,9 @@
 # nullnet-firewall
 
+[![Crates](https://img.shields.io/crates/v/nullnet-firewall?&logo=rust)](https://crates.io/crates/nullnet-firewall)
+[![CI](https://github.com/gyulyvgc/nullnet-firewall/workflows/CI/badge.svg)](https://github.com/GyulyVGC/nullnet-firewall/actions/)
+[![Docs](https://docs.rs/nullnet-firewall/badge.svg)](https://docs.rs/nullnet-firewall/latest/)
+
 **Rust-based firewall for network drivers.**
 
 ## Purpose
