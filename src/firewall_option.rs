@@ -208,57 +208,71 @@ mod tests {
 
     #[test]
     fn test_not_existing_option() {
+        let err = FirewallOption::new("--not-exists", "8.8.8.8").unwrap_err();
+        assert_eq!(err, FirewallError::UnknownOption("--not-exists".to_owned()));
         assert_eq!(
-            FirewallOption::new("--not-exists", "8.8.8.8"),
-            Err(FirewallError::UnknownOption("--not-exists".to_owned()))
+            err.to_string(),
+            "Firewall error - the specified option '--not-exists' doesn't exist"
         );
     }
 
     #[test]
     fn test_invalid_dest_option() {
+        let err = FirewallOption::new("--dest", "8").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidDestValue("8".to_owned()));
         assert_eq!(
-            FirewallOption::new("--dest", "8"),
-            Err(FirewallError::InvalidDestValue("8".to_owned()))
+            err.to_string(),
+            "Firewall error - incorrect value for option '--dest 8'"
         );
     }
 
     #[test]
     fn test_invalid_dport_option() {
+        let err = FirewallOption::new("--dport", "8.8.8.8").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidDportValue("8.8.8.8".to_owned()));
         assert_eq!(
-            FirewallOption::new("--dport", "8.8.8.8"),
-            Err(FirewallError::InvalidDportValue("8.8.8.8".to_owned()))
+            err.to_string(),
+            "Firewall error - incorrect value for option '--dport 8.8.8.8'"
         );
     }
 
     #[test]
     fn test_invalid_source_option() {
+        let err = FirewallOption::new("--source", "8").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidSourceValue("8".to_owned()));
         assert_eq!(
-            FirewallOption::new("--source", "8"),
-            Err(FirewallError::InvalidSourceValue("8".to_owned()))
+            err.to_string(),
+            "Firewall error - incorrect value for option '--source 8'"
         );
     }
 
     #[test]
     fn test_invalid_sport_option() {
+        let err = FirewallOption::new("--sport", "8.8.8.8").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidSportValue("8.8.8.8".to_owned()));
         assert_eq!(
-            FirewallOption::new("--sport", "8.8.8.8"),
-            Err(FirewallError::InvalidSportValue("8.8.8.8".to_owned()))
+            err.to_string(),
+            "Firewall error - incorrect value for option '--sport 8.8.8.8'"
         );
     }
 
     #[test]
     fn test_invalid_proto_option() {
+        let err = FirewallOption::new("--proto", "256").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidProtocolValue("256".to_owned()));
         assert_eq!(
-            FirewallOption::new("--proto", "256"),
-            Err(FirewallError::InvalidProtocolValue("256".to_owned()))
+            err.to_string(),
+            "Firewall error - incorrect value for option '--proto 256'"
         );
     }
 
     #[test]
     fn test_invalid_icmp_type_option() {
+        let err = FirewallOption::new("--icmp-type", "-1").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidIcmpTypeValue("-1".to_owned()));
         assert_eq!(
-            FirewallOption::new("--icmp-type", "256"),
-            Err(FirewallError::InvalidIcmpTypeValue("256".to_owned()))
+            err.to_string(),
+            "Firewall error - incorrect value for option '--icmp-type -1'"
         );
     }
 

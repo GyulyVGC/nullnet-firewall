@@ -37,9 +37,12 @@ mod tests {
             FirewallDirection::from_str("OUT"),
             Ok(FirewallDirection::OUT)
         );
+
+        let err = FirewallDirection::from_str("UNDER").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidDirection("UNDER".to_owned()));
         assert_eq!(
-            FirewallDirection::from_str("UNDER"),
-            Err(FirewallError::InvalidDirection("UNDER".to_owned()))
+            err.to_string(),
+            "Firewall error - incorrect direction 'UNDER'"
         );
     }
 }

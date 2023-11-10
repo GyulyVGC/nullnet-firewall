@@ -47,9 +47,9 @@ mod tests {
             FirewallAction::from_str("REJECT"),
             Ok(FirewallAction::REJECT)
         );
-        assert_eq!(
-            FirewallAction::from_str("DROP"),
-            Err(FirewallError::InvalidAction("DROP".to_owned()))
-        );
+
+        let err = FirewallAction::from_str("DROP").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidAction("DROP".to_owned()));
+        assert_eq!(err.to_string(), "Firewall error - incorrect action 'DROP'");
     }
 }

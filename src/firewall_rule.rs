@@ -197,19 +197,24 @@ mod tests {
 
     #[test]
     fn test_rule_empty_option() {
+        let err = FirewallRule::new("OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport").unwrap_err();
+        assert_eq!(err, FirewallError::EmptyOption("--dport".to_owned()));
         assert_eq!(
-            FirewallRule::new("OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport"),
-            Err(FirewallError::EmptyOption("--dport".to_owned()))
+            err.to_string(),
+            "Firewall error - the supplied option '--dport' is empty"
         );
     }
 
     #[test]
     fn test_rule_duplicated_option() {
+        let err = FirewallRule::new(
+            "OUT ACCEPT --dport 8 --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3",
+        )
+        .unwrap_err();
+        assert_eq!(err, FirewallError::DuplicatedOption("--dport".to_owned()));
         assert_eq!(
-            FirewallRule::new(
-                "OUT ACCEPT --dport 8 --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3"
-            ),
-            Err(FirewallError::DuplicatedOption("--dport".to_owned()))
+            err.to_string(),
+            "Firewall error - duplicated option '--dport' for the same rule"
         );
 
         assert_eq!(
@@ -245,11 +250,14 @@ mod tests {
 
     #[test]
     fn test_rule_not_applicable_icmp_type() {
+        let err = FirewallRule::new(
+            "OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3 --icmp-type 8",
+        )
+        .unwrap_err();
+        assert_eq!(err, FirewallError::NotApplicableIcmpType);
         assert_eq!(
-            FirewallRule::new(
-                "OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3 --icmp-type 8"
-            ),
-            Err(FirewallError::NotApplicableIcmpType)
+            err.to_string(),
+            "Firewall error - option '--icmp-type' is valid only if '--proto 1' or '--proto 58' is also specified"
         );
 
         assert_eq!(FirewallRule::new(
@@ -267,9 +275,11 @@ mod tests {
 
     #[test]
     fn test_rule_not_enough_arguments() {
+        let err = FirewallRule::new("").unwrap_err();
+        assert_eq!(err, FirewallError::NotEnoughArguments);
         assert_eq!(
-            FirewallRule::new(""),
-            Err(FirewallError::NotEnoughArguments)
+            err.to_string(),
+            "Firewall error - not enough arguments supplied for rule"
         );
 
         assert_eq!(
