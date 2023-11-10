@@ -38,7 +38,7 @@ pub(crate) fn get_proto(ip_header: Option<IpHeader>) -> Option<u8> {
 mod tests {
     use crate::fields::ip_header::{get_dest, get_proto, get_source};
     use crate::utils::raw_packets::test_packets::{
-        ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+        ARP_PACKET, ICMPV6_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
     use etherparse::PacketHeaders;
     use std::net::IpAddr;
@@ -74,6 +74,16 @@ mod tests {
     #[test]
     fn test_get_source_udp_ipv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
+        let ip_header = headers.ip;
+        assert_eq!(
+            get_source(ip_header.clone()),
+            Some(IpAddr::from_str("3ffe:501:4819::42").unwrap())
+        );
+    }
+
+    #[test]
+    fn test_get_source_icmpv6_packet() {
+        let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
             get_source(ip_header.clone()),
@@ -119,6 +129,16 @@ mod tests {
     }
 
     #[test]
+    fn test_get_dest_icmpv6_packet() {
+        let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
+        let ip_header = headers.ip;
+        assert_eq!(
+            get_dest(ip_header.clone()),
+            Some(IpAddr::from_str("3ffe:507:0:1:200:86ff:fe05:8da").unwrap())
+        );
+    }
+
+    #[test]
     fn test_get_proto_tcp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let ip_header = headers.ip;
@@ -144,5 +164,12 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(get_proto(ip_header.clone()), Some(17)); // udp
+    }
+
+    #[test]
+    fn test_get_proto_icmpv6_packet() {
+        let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
+        let ip_header = headers.ip;
+        assert_eq!(get_proto(ip_header.clone()), Some(58)); // icmpv6
     }
 }

@@ -40,7 +40,7 @@ pub(crate) fn get_icmp_type(transport_header: Option<TransportHeader>) -> Option
 mod tests {
     use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
     use crate::utils::raw_packets::test_packets::{
-        ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+        ARP_PACKET, ICMPV6_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
     use etherparse::PacketHeaders;
 
@@ -73,6 +73,13 @@ mod tests {
     }
 
     #[test]
+    fn test_get_sport_icmpv6_packet() {
+        let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
+        let transport_header = headers.transport;
+        assert_eq!(get_sport(transport_header.clone()), None);
+    }
+
+    #[test]
     fn test_get_dport_tcp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let transport_header = headers.transport;
@@ -101,6 +108,13 @@ mod tests {
     }
 
     #[test]
+    fn test_get_dport_icmpv6_packet() {
+        let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
+        let transport_header = headers.transport;
+        assert_eq!(get_dport(transport_header.clone()), None);
+    }
+
+    #[test]
     fn test_get_icmp_type_tcp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let transport_header = headers.transport;
@@ -126,5 +140,12 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let transport_header = headers.transport;
         assert_eq!(get_icmp_type(transport_header.clone()), None);
+    }
+
+    #[test]
+    fn test_get_icmp_type_icmpv6_packet() {
+        let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
+        let transport_header = headers.transport;
+        assert_eq!(get_icmp_type(transport_header.clone()), Some(135)); // neighbor solicitation
     }
 }
