@@ -468,4 +468,32 @@ mod tests {
         assert!(range_sport_ok.matches_packet(&UDP_IPV6_PACKET));
         assert!(!range_sport_ko.matches_packet(&UDP_IPV6_PACKET));
     }
+
+    #[test]
+    fn test_invalid_packets_do_not_match_options() {
+        let sport = FirewallOption::new("--sport", "53").unwrap();
+        let source = FirewallOption::new("--source", "55.55.55.55").unwrap();
+        let dest = FirewallOption::new("--dest", "0.0.0.0-255.255.255.255").unwrap();
+        let dport = FirewallOption::new("--dport", "0:65535").unwrap();
+        let proto = FirewallOption::new("--proto", "1").unwrap();
+        let icmp_type = FirewallOption::new("--icmp-type", "8").unwrap();
+
+        // invalid packet #1
+        let packet_1 = [];
+        assert!(!sport.matches_packet(&packet_1));
+        assert!(!source.matches_packet(&packet_1));
+        assert!(!dest.matches_packet(&packet_1));
+        assert!(!dport.matches_packet(&packet_1));
+        assert!(!proto.matches_packet(&packet_1));
+        assert!(!icmp_type.matches_packet(&packet_1));
+
+        // invalid packet #2
+        let packet_2 = [b'n', b'o', b't', b'v', b'a', b'l', b'i', b'd'];
+        assert!(!sport.matches_packet(&packet_2));
+        assert!(!source.matches_packet(&packet_2));
+        assert!(!dest.matches_packet(&packet_2));
+        assert!(!dport.matches_packet(&packet_2));
+        assert!(!proto.matches_packet(&packet_2));
+        assert!(!icmp_type.matches_packet(&packet_2));
+    }
 }
