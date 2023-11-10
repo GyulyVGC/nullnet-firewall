@@ -24,3 +24,22 @@ impl FromStr for FirewallDirection {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{FirewallDirection, FirewallError};
+    use std::str::FromStr;
+
+    #[test]
+    fn test_firewall_directions_from_str() {
+        assert_eq!(FirewallDirection::from_str("IN"), Ok(FirewallDirection::IN));
+        assert_eq!(
+            FirewallDirection::from_str("OUT"),
+            Ok(FirewallDirection::OUT)
+        );
+        assert_eq!(
+            FirewallDirection::from_str("UNDER"),
+            Err(FirewallError::InvalidDirection("UNDER".to_owned()))
+        );
+    }
+}

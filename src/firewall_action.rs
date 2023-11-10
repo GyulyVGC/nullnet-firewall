@@ -30,3 +30,26 @@ impl FromStr for FirewallAction {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{FirewallAction, FirewallError};
+    use std::str::FromStr;
+
+    #[test]
+    fn test_firewall_actions_from_str() {
+        assert_eq!(
+            FirewallAction::from_str("ACCEPT"),
+            Ok(FirewallAction::ACCEPT)
+        );
+        assert_eq!(FirewallAction::from_str("DENY"), Ok(FirewallAction::DENY));
+        assert_eq!(
+            FirewallAction::from_str("REJECT"),
+            Ok(FirewallAction::REJECT)
+        );
+        assert_eq!(
+            FirewallAction::from_str("DROP"),
+            Err(FirewallError::InvalidAction("DROP".to_owned()))
+        );
+    }
+}
