@@ -366,6 +366,9 @@ mod tests {
         assert!(!firewall.enabled);
         assert_eq!(firewall.policy_in, FirewallAction::DENY);
         assert_eq!(firewall.policy_out, FirewallAction::REJECT);
+
+        firewall.enable();
+        assert!(firewall.enabled);
     }
 
     #[test]
