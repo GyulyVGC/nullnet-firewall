@@ -1,6 +1,6 @@
-use crate::FirewallError;
-use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
+use crate::FirewallError;
 
 /// Direction of a firewall rule.
 ///
@@ -11,17 +11,6 @@ pub enum FirewallDirection {
     IN,
     /// Refers to outgoing network traffic.
     OUT,
-}
-
-impl Display for FirewallDirection {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            FirewallDirection::IN => "IN",
-            FirewallDirection::OUT => "OUT",
-        };
-
-        write!(f, "{str}")
-    }
 }
 
 impl FromStr for FirewallDirection {

@@ -1,6 +1,6 @@
-use crate::FirewallError;
-use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
+use crate::FirewallError;
 
 /// Action dictated by a firewall rule.
 ///
@@ -16,18 +16,6 @@ pub enum FirewallAction {
     ///
     /// An *ICMP Destination Unreachable* message should be sent back to the traffic source.
     REJECT,
-}
-
-impl Display for FirewallAction {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let str = match self {
-            FirewallAction::ACCEPT => "ACCEPT",
-            FirewallAction::DENY => "DENY",
-            FirewallAction::REJECT => "REJECT",
-        };
-
-        write!(f, "{str}")
-    }
 }
 
 impl FromStr for FirewallAction {

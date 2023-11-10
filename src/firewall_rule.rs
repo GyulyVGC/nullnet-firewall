@@ -1,7 +1,8 @@
-use crate::firewall_option::FirewallOption;
-use crate::{FirewallAction, FirewallDirection, FirewallError};
 use std::collections::HashMap;
 use std::str::FromStr;
+
+use crate::firewall_option::FirewallOption;
+use crate::{FirewallAction, FirewallDirection, FirewallError};
 
 /// A firewall rule
 #[derive(Debug, Eq, PartialEq)]

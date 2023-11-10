@@ -1,5 +1,6 @@
-use crate::firewall_option::FirewallOption;
 use std::fmt::{Display, Formatter};
+
+use crate::firewall_option::FirewallOption;
 
 /// Error that may arise as a consequence of an invalid firewall specification.
 #[derive(Debug, Eq, PartialEq, Clone)]

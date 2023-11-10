@@ -1,7 +1,8 @@
-use crate::firewall_option::FirewallOption;
-use crate::FirewallError;
 use std::ops::RangeInclusive;
 use std::str::FromStr;
+
+use crate::firewall_option::FirewallOption;
+use crate::FirewallError;
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct PortCollection {

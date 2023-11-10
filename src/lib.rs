@@ -89,13 +89,8 @@
 //! [output policy](Firewall::set_policy_out) can
 //! be overridden for packets that doesn't match any of the firewall rules.
 
-mod fields;
-mod firewall_action;
-mod firewall_direction;
-mod firewall_error;
-mod firewall_option;
-mod firewall_rule;
-mod utils;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 use crate::fields::ip_header::{get_dest, get_proto, get_source};
 use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
@@ -103,8 +98,14 @@ pub use crate::firewall_action::FirewallAction;
 pub use crate::firewall_direction::FirewallDirection;
 pub use crate::firewall_error::FirewallError;
 use crate::firewall_rule::FirewallRule;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+
+mod fields;
+mod firewall_action;
+mod firewall_direction;
+mod firewall_error;
+mod firewall_option;
+mod firewall_rule;
+mod utils;
 
 /// Object embedding a collection of firewall rules and policies to determine
 /// the action to be taken for a given network packet.

@@ -38,11 +38,12 @@ pub(crate) fn get_icmp_type(transport_header: Option<TransportHeader>) -> Option
 
 #[cfg(test)]
 mod tests {
+    use etherparse::PacketHeaders;
+
     use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMPV6_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
-    use etherparse::PacketHeaders;
 
     #[test]
     fn test_get_sport_tcp_packet() {

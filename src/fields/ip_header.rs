@@ -1,5 +1,6 @@
-use etherparse::IpHeader;
 use std::net::IpAddr;
+
+use etherparse::IpHeader;
 
 pub(crate) fn get_source(ip_header: Option<IpHeader>) -> Option<IpAddr> {
     if let Some(ip) = ip_header {
@@ -36,13 +37,15 @@ pub(crate) fn get_proto(ip_header: Option<IpHeader>) -> Option<u8> {
 
 #[cfg(test)]
 mod tests {
+    use std::net::IpAddr;
+    use std::str::FromStr;
+
+    use etherparse::PacketHeaders;
+
     use crate::fields::ip_header::{get_dest, get_proto, get_source};
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMPV6_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
-    use etherparse::PacketHeaders;
-    use std::net::IpAddr;
-    use std::str::FromStr;
 
     #[test]
     fn test_get_source_tcp_packet() {

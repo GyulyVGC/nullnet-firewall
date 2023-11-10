@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
+use etherparse::PacketHeaders;
+
 use crate::utils::ip_collection::IpCollection;
 use crate::utils::port_collection::PortCollection;
 use crate::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport, FirewallError};
-use etherparse::PacketHeaders;
-use std::str::FromStr;
 
 /// Options associated to a specific firewall rule
 #[derive(Debug, Eq, PartialEq)]
