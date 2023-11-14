@@ -89,6 +89,7 @@
 //! [output policy](Firewall::set_policy_out) can
 //! be overridden for packets that doesn't match any of the firewall rules.
 
+use crate::fields::fields::Fields;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -98,6 +99,7 @@ pub use crate::firewall_action::FirewallAction;
 pub use crate::firewall_direction::FirewallDirection;
 pub use crate::firewall_error::FirewallError;
 use crate::firewall_rule::FirewallRule;
+use crate::logs::log_packet::LogPacket;
 
 mod fields;
 mod firewall_action;
@@ -112,12 +114,14 @@ mod utils;
 /// the action to be taken for a given network packet.
 ///
 /// A new `Firewall` can be created from a textual file listing a set of rule.
-#[derive(Debug, Eq, PartialEq, Default)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Firewall {
     rules: Vec<FirewallRule>,
     enabled: bool,
     policy_in: FirewallAction,
     policy_out: FirewallAction,
+    log_console: bool,
+    log_db: bool,
 }
 
 impl Firewall {
@@ -209,13 +213,21 @@ impl Firewall {
             FirewallDirection::OUT => self.policy_out,
         };
 
+        // structure the packet as a set of relevant fields
+        let fields = Fields::new(packet);
+
+        // determine action for packet
         let mut current_specificity = 0;
         for rule in &self.rules {
-            if rule.matches_packet(packet, direction) && rule.specificity() >= current_specificity {
+            if rule.matches_packet(fields, direction) && rule.specificity() >= current_specificity {
                 current_specificity = rule.specificity();
                 action = rule.action;
             }
         }
+
+        // send the log entry to the logger thread
+        let log_packet = LogPacket::new(fields, direction, action);
+
         action
     }
 
@@ -313,19 +325,25 @@ impl Firewall {
     pub fn set_policy_out(&mut self, policy: FirewallAction) {
         self.policy_out = policy;
     }
+
+    pub fn set_logs(&mut self, console: bool, db: bool) {
+        self.log_console = console;
+        self.log_db = db;
+    }
 }
 
-// for the moment it can be derived
-// impl Default for Firewall {
-//     fn default() -> Self {
-//         Self {
-//             rules: vec![],
-//             enabled: false,
-//             policy_in: FirewallAction::default(),
-//             policy_out: FirewallAction::default(),
-//         }
-//     }
-// }
+impl Default for Firewall {
+    fn default() -> Self {
+        Self {
+            rules: vec![],
+            enabled: true,
+            policy_in: FirewallAction::default(),
+            policy_out: FirewallAction::default(),
+            log_console: true,
+            log_db: true,
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
