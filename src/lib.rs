@@ -105,6 +105,7 @@ mod firewall_direction;
 mod firewall_error;
 mod firewall_option;
 mod firewall_rule;
+mod logs;
 mod utils;
 
 /// Object embedding a collection of firewall rules and policies to determine
