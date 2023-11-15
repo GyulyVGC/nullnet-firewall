@@ -52,7 +52,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
-            get_source(ip_header.clone()),
+            get_source(&ip_header),
             Some(IpAddr::from_str("192.168.200.135").unwrap())
         );
     }
@@ -62,7 +62,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
-            get_source(ip_header.clone()),
+            get_source(&ip_header),
             Some(IpAddr::from_str("2.1.1.2").unwrap())
         );
     }
@@ -71,7 +71,7 @@ mod tests {
     fn test_get_source_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let ip_header = headers.ip;
-        assert_eq!(get_source(ip_header.clone()), None);
+        assert_eq!(get_source(&ip_header), None);
     }
 
     #[test]
@@ -79,7 +79,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
-            get_source(ip_header.clone()),
+            get_source(&ip_header),
             Some(IpAddr::from_str("3ffe:501:4819::42").unwrap())
         );
     }
@@ -89,7 +89,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
-            get_source(ip_header.clone()),
+            get_source(&ip_header),
             Some(IpAddr::from_str("3ffe:501:4819::42").unwrap())
         );
     }
@@ -99,7 +99,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
-            get_dest(ip_header.clone()),
+            get_dest(&ip_header),
             Some(IpAddr::from_str("192.168.200.21").unwrap())
         );
     }
@@ -109,7 +109,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
-            get_dest(ip_header.clone()),
+            get_dest(&ip_header),
             Some(IpAddr::from_str("2.1.1.1").unwrap())
         );
     }
@@ -118,7 +118,7 @@ mod tests {
     fn test_get_dest_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let ip_header = headers.ip;
-        assert_eq!(get_dest(ip_header.clone()), None);
+        assert_eq!(get_dest(&ip_header), None);
     }
 
     #[test]
@@ -126,7 +126,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
-            get_dest(ip_header.clone()),
+            get_dest(&ip_header),
             Some(IpAddr::from_str("3ffe:507:0:1:200:86ff:fe05:8da").unwrap())
         );
     }
@@ -136,7 +136,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let ip_header = headers.ip;
         assert_eq!(
-            get_dest(ip_header.clone()),
+            get_dest(&ip_header),
             Some(IpAddr::from_str("3ffe:507:0:1:200:86ff:fe05:8da").unwrap())
         );
     }
@@ -145,34 +145,34 @@ mod tests {
     fn test_get_proto_tcp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let ip_header = headers.ip;
-        assert_eq!(get_proto(ip_header.clone()), Some(6)); // tcp
+        assert_eq!(get_proto(&ip_header), Some(6)); // tcp
     }
 
     #[test]
     fn test_get_proto_icmp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let ip_header = headers.ip;
-        assert_eq!(get_proto(ip_header.clone()), Some(1)); // icmp
+        assert_eq!(get_proto(&ip_header), Some(1)); // icmp
     }
 
     #[test]
     fn test_get_proto_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let ip_header = headers.ip;
-        assert_eq!(get_proto(ip_header.clone()), None);
+        assert_eq!(get_proto(&ip_header), None);
     }
 
     #[test]
     fn test_get_proto_udp_ipv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let ip_header = headers.ip;
-        assert_eq!(get_proto(ip_header.clone()), Some(17)); // udp
+        assert_eq!(get_proto(&ip_header), Some(17)); // udp
     }
 
     #[test]
     fn test_get_proto_icmpv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let ip_header = headers.ip;
-        assert_eq!(get_proto(ip_header.clone()), Some(58)); // icmpv6
+        assert_eq!(get_proto(&ip_header), Some(58)); // icmpv6
     }
 }

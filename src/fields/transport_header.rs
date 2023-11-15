@@ -49,104 +49,104 @@ mod tests {
     fn test_get_sport_tcp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_sport(transport_header.clone()), Some(6711));
+        assert_eq!(get_sport(&transport_header), Some(6711));
     }
 
     #[test]
     fn test_get_sport_icmp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_sport(transport_header.clone()), None);
+        assert_eq!(get_sport(&transport_header), None);
     }
 
     #[test]
     fn test_get_sport_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_sport(transport_header.clone()), None);
+        assert_eq!(get_sport(&transport_header), None);
     }
 
     #[test]
     fn test_get_sport_udp_ipv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_sport(transport_header.clone()), Some(53));
+        assert_eq!(get_sport(&transport_header), Some(53));
     }
 
     #[test]
     fn test_get_sport_icmpv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_sport(transport_header.clone()), None);
+        assert_eq!(get_sport(&transport_header), None);
     }
 
     #[test]
     fn test_get_dport_tcp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_dport(transport_header.clone()), Some(2000));
+        assert_eq!(get_dport(&transport_header), Some(2000));
     }
 
     #[test]
     fn test_get_dport_icmp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_dport(transport_header.clone()), None);
+        assert_eq!(get_dport(&transport_header), None);
     }
 
     #[test]
     fn test_get_dport_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_dport(transport_header.clone()), None);
+        assert_eq!(get_dport(&transport_header), None);
     }
 
     #[test]
     fn test_get_dport_udp_ipv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_dport(transport_header.clone()), Some(2396));
+        assert_eq!(get_dport(&transport_header), Some(2396));
     }
 
     #[test]
     fn test_get_dport_icmpv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_dport(transport_header.clone()), None);
+        assert_eq!(get_dport(&transport_header), None);
     }
 
     #[test]
     fn test_get_icmp_type_tcp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_icmp_type(transport_header.clone()), None);
+        assert_eq!(get_icmp_type(&transport_header), None);
     }
 
     #[test]
     fn test_get_icmp_type_icmp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_icmp_type(transport_header.clone()), Some(8)); // echo request
+        assert_eq!(get_icmp_type(&transport_header), Some(8)); // echo request
     }
 
     #[test]
     fn test_get_icmp_type_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_icmp_type(transport_header.clone()), None);
+        assert_eq!(get_icmp_type(&transport_header), None);
     }
 
     #[test]
     fn test_get_icmp_type_udp_ipv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_icmp_type(transport_header.clone()), None);
+        assert_eq!(get_icmp_type(&transport_header), None);
     }
 
     #[test]
     fn test_get_icmp_type_icmpv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let transport_header = headers.transport;
-        assert_eq!(get_icmp_type(transport_header.clone()), Some(135)); // neighbor solicitation
+        assert_eq!(get_icmp_type(&transport_header), Some(135)); // neighbor solicitation
     }
 }

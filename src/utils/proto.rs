@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 pub(crate) enum Proto {
     HOPOPT,
     ICMP,
@@ -148,6 +148,7 @@ pub(crate) enum Proto {
 }
 
 impl Proto {
+    #[allow(clippy::too_many_lines)]
     pub(crate) fn from_number(num: Option<u8>) -> Proto {
         if let Some(proto) = num {
             return match proto {
@@ -294,9 +295,8 @@ impl Proto {
                 145 => Proto::NSH,
                 _ => Proto::Unknown,
             };
-        } else {
-            Proto::Unknown
         }
+        Proto::Unknown
     }
 }
 
@@ -344,7 +344,7 @@ impl Display for Proto {
             Proto::MPLS_in_IP => "MPLS-in-IP".to_string(),
             Proto::Unknown => "-".to_string(),
             _ => {
-                format!("{:?}", self)
+                format!("{self:?}")
             }
         };
 

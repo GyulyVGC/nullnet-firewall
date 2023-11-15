@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use crate::firewall_option::FirewallOption;
-use crate::{FirewallAction, FirewallDirection, FirewallError};
+use crate::{Fields, FirewallAction, FirewallDirection, FirewallError};
 
 /// A firewall rule
 #[derive(Debug, Eq, PartialEq)]
@@ -55,9 +55,9 @@ impl FirewallRule {
         })
     }
 
-    pub(crate) fn matches_packet(&self, packet: &[u8], direction: &FirewallDirection) -> bool {
+    pub(crate) fn matches_packet(&self, fields: &Fields, direction: &FirewallDirection) -> bool {
         for option in &self.options {
-            if !option.matches_packet(packet) {
+            if !option.matches_packet(fields) {
                 return false;
             }
         }
@@ -105,7 +105,7 @@ mod tests {
     use crate::utils::ip_collection::IpCollection;
     use crate::utils::port_collection::PortCollection;
     use crate::utils::raw_packets::test_packets::{ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
-    use crate::{FirewallAction, FirewallDirection, FirewallError, FirewallRule};
+    use crate::{Fields, FirewallAction, FirewallDirection, FirewallError, FirewallRule};
 
     #[test]
     fn test_new_firewall_rules() {
@@ -305,116 +305,119 @@ mod tests {
 
     #[test]
     fn test_rules_match_packets() {
+        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
         let rule_1 = FirewallRule::new("OUT DENY").unwrap();
-        assert!(rule_1.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_1.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(rule_1.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_1.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(rule_1.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_1.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(rule_1.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_1.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_2 = FirewallRule::new("IN DENY").unwrap();
-        assert!(!rule_2.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(rule_2.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_2.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(rule_2.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_2.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(rule_2.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_2.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(rule_2.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_3_ok_out =
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --dport 1999:2001").unwrap();
-        assert!(rule_3_ok_out.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_3_ok_out.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_3_ok_out.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_3_ok_out.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(rule_3_ok_out.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_3_ok_out.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_3_ok_out.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_3_ok_out.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_4_ok_in =
             FirewallRule::new("IN REJECT --source 192.168.200.135 --dport 1999:2001").unwrap();
-        assert!(!rule_4_ok_in.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(rule_4_ok_in.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_4_ok_in.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_4_ok_in.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_4_ok_in.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(rule_4_ok_in.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_4_ok_in.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_4_ok_in.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_5_ok_out =
             FirewallRule::new("OUT ACCEPT --source 192.168.200.135 --dport 1999:2001 --sport 6711")
                 .unwrap();
-        assert!(rule_5_ok_out.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_5_ok_out.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_5_ok_out.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_5_ok_out.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(rule_5_ok_out.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_5_ok_out.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_5_ok_out.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_5_ok_out.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_6_ko =
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --dport 1999:2001 --sport 6710")
                 .unwrap();
-        assert!(!rule_6_ko.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_6_ko.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_6_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_6_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_6_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_6_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_6_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_6_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_7_ok_out = FirewallRule::new("OUT REJECT --source 192.168.200.135 --dport 1999:2001 --sport 6711 --dest 192.168.200.10-192.168.200.21").unwrap();
-        assert!(rule_7_ok_out.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_7_ok_out.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_7_ok_out.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_7_ok_out.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(rule_7_ok_out.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_7_ok_out.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_7_ok_out.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_7_ok_out.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_8_ko = FirewallRule::new("OUT REJECT --source 192.168.200.135 --dport 1999:2001 --sport 6711 --dest 192.168.200.10-192.168.200.20").unwrap();
-        assert!(!rule_8_ko.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_8_ko.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_8_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_8_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_8_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_8_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_8_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_8_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_9_ok_in = FirewallRule::new("IN ACCEPT --proto 6").unwrap();
-        assert!(!rule_9_ok_in.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(rule_9_ok_in.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_9_ok_in.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_9_ok_in.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_9_ok_in.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(rule_9_ok_in.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_9_ok_in.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_9_ok_in.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_10_ko = FirewallRule::new("IN ACCEPT --proto 58").unwrap();
-        assert!(!rule_10_ko.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_10_ko.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_10_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_10_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_10_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_10_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_10_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_10_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_11_ko = FirewallRule::new("IN ACCEPT --proto 1 --icmp-type 8").unwrap();
-        assert!(!rule_11_ko.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_11_ko.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_11_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(rule_11_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_11_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_11_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_11_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(rule_11_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_12_ko = FirewallRule::new("OUT DENY --proto 1 --icmp-type 7").unwrap();
-        assert!(!rule_12_ko.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_12_ko.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(!rule_12_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_12_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_12_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_12_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(!rule_12_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_12_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
         let rule_13_ko = FirewallRule::new("OUT DENY --proto 1 --icmp-type 8").unwrap();
-        assert!(!rule_13_ko.matches_packet(&TCP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_13_ko.matches_packet(&TCP_PACKET, &FirewallDirection::IN));
-        assert!(rule_13_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_13_ko.matches_packet(&ICMP_PACKET, &FirewallDirection::IN));
+        assert!(!rule_13_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_13_ko.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
+        assert!(rule_13_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_13_ko.matches_packet(&icmp_packet_fields, &FirewallDirection::IN));
     }
 
     #[test]
     fn test_rules_match_ipv6() {
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
         let rule_1 = FirewallRule::new("OUT DENY").unwrap();
-        assert!(rule_1.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_1.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN));
+        assert!(rule_1.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_1.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
         let rule_2 = FirewallRule::new("IN DENY").unwrap();
-        assert!(!rule_2.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT));
-        assert!(rule_2.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN));
+        assert!(!rule_2.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
+        assert!(rule_2.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
         let rule_3_ok_out =
             FirewallRule::new("OUT REJECT --dest 3ffe:507:0:1:200:86ff:fe05:8da --proto 17")
                 .unwrap();
-        assert!(rule_3_ok_out.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_3_ok_out.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN));
+        assert!(rule_3_ok_out.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_3_ok_out.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
         let rule_4_ok_in =
             FirewallRule::new("IN REJECT --dest 3ffe:507:0:1:200:86ff:fe05:8da --proto 17")
                 .unwrap();
-        assert!(!rule_4_ok_in.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT));
-        assert!(rule_4_ok_in.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN));
+        assert!(!rule_4_ok_in.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
+        assert!(rule_4_ok_in.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
         let rule_5_ok_out = FirewallRule::new(
             "OUT ACCEPT --dest 3ffe:507:0:1:200:86ff:fe05:8da --proto 17 --sport 545:560,43,53",
         )
         .unwrap();
-        assert!(rule_5_ok_out.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_5_ok_out.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN));
+        assert!(rule_5_ok_out.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_5_ok_out.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
         let rule_6_ko = FirewallRule::new(
             "OUT ACCEPT --dest 3ffe:507:0:1:200:86ff:fe05:8da --proto 17 --sport 545:560,43,52",
         )
         .unwrap();
-        assert!(!rule_6_ko.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_6_ko.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN));
+        assert!(!rule_6_ko.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_6_ko.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
         let rule_9_ok_in =
             FirewallRule::new("IN ACCEPT --source 3ffe:501:4819::42,3ffe:501:4819::49").unwrap();
-        assert!(!rule_9_ok_in.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT));
-        assert!(rule_9_ok_in.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN));
+        assert!(!rule_9_ok_in.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
+        assert!(rule_9_ok_in.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
         let rule_10_ko =
             FirewallRule::new("IN ACCEPT --source 3ffe:501:4819::47,3ffe:501:4819::49").unwrap();
-        assert!(!rule_10_ko.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::OUT));
-        assert!(!rule_10_ko.matches_packet(&UDP_IPV6_PACKET, &FirewallDirection::IN));
+        assert!(!rule_10_ko.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
+        assert!(!rule_10_ko.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
     }
 }

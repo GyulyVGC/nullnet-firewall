@@ -1,24 +1,23 @@
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
 use chrono::{DateTime, Utc};
-use etherparse::PacketHeaders;
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 
-pub(crate) struct LogPacket {
+pub(crate) struct LogEntry {
     timestamp: DateTime<Utc>,
     direction: FirewallDirection,
     action: FirewallAction,
     fields: Fields,
 }
 
-impl LogPacket {
+impl LogEntry {
     pub(crate) fn new(
         fields: Fields,
         direction: FirewallDirection,
         action: FirewallAction,
-    ) -> LogPacket {
-        LogPacket {
+    ) -> LogEntry {
+        LogEntry {
             timestamp: chrono::offset::Utc::now(),
             direction,
             action,
@@ -27,7 +26,7 @@ impl LogPacket {
     }
 }
 
-impl Display for LogPacket {
+impl Display for LogEntry {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -65,7 +64,7 @@ fn format_ip_address(addr: Option<IpAddr>) -> String {
 }
 
 fn format_ipv4_address(address: [u8; 4]) -> String {
-    format!("{:?}", address)
+    format!("{address:?}")
         .replace('[', "")
         .replace(']', "")
         .replace(',', ".")
@@ -78,13 +77,6 @@ fn format_ipv4_address(address: [u8; 4]) -> String {
 /// # Arguments
 ///
 /// * `ipv6_long` - Contains the 16 integer composing the not compressed decimal ipv6 address
-///
-/// # Example
-///
-/// ```
-/// let result = format_ipv6_address([255,10,10,255,0,0,0,0,28,4,4,28,255,1,0,0]);
-/// assert_eq!(result, "ff0a:aff::1c04:41c:ff01:0".to_string());
-/// ```
 fn format_ipv6_address(ipv6_long: [u8; 16]) -> String {
     //from hex to dec, paying attention to the correct number of digits
     let mut ipv6_hex = String::new();

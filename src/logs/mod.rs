@@ -1,1 +1,1 @@
-pub(crate) mod log_packet;
+pub(crate) mod log_entry;
