@@ -22,7 +22,7 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
             dest      TEXT,
             sport     TEXT,
             dport     TEXT,
-            icmp-type TEXT,
+            icmptype TEXT,
             size      INTEGER NOT NULL
         )",
         (),
