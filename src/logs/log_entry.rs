@@ -1,11 +1,11 @@
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Utc};
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 
 pub(crate) struct LogEntry {
-    timestamp: DateTime<Local>,
+    //timestamp: DateTime<Utc>,
     direction: FirewallDirection,
     action: FirewallAction,
     fields: Fields,
@@ -18,7 +18,7 @@ impl LogEntry {
         action: FirewallAction,
     ) -> LogEntry {
         LogEntry {
-            timestamp: chrono::offset::Local::now(),
+            // timestamp: chrono::offset::Utc::now(),
             direction,
             action,
             fields,
@@ -30,8 +30,8 @@ impl Display for LogEntry {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} {:?} {:?} {} {} {} {} {} {} {}",
-            self.timestamp,
+            "{:?} {:?} {} {} {} {} {} {} {}",
+            // self.timestamp,
             self.direction,
             self.action,
             Proto::from_number(self.fields.proto),
