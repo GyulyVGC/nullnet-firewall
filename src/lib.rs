@@ -92,6 +92,9 @@
 use crate::fields::fields::Fields;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, Sender};
+use std::thread;
 
 use crate::fields::ip_header::{get_dest, get_proto, get_source};
 use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
@@ -100,6 +103,7 @@ pub use crate::firewall_direction::FirewallDirection;
 pub use crate::firewall_error::FirewallError;
 use crate::firewall_rule::FirewallRule;
 use crate::logs::log_entry::LogEntry;
+use crate::logs::logger::log;
 
 mod fields;
 mod firewall_action;
@@ -114,7 +118,7 @@ mod utils;
 /// the action to be taken for a given network packet.
 ///
 /// A new `Firewall` can be created from a textual file listing a set of rule.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug)]
 pub struct Firewall {
     rules: Vec<FirewallRule>,
     enabled: bool,
@@ -122,6 +126,7 @@ pub struct Firewall {
     policy_out: FirewallAction,
     log_console: bool,
     log_db: bool,
+    tx: Sender<LogEntry>,
 }
 
 impl Firewall {
@@ -165,9 +170,22 @@ impl Firewall {
             rules.push(FirewallRule::new(&firewall_rule_str)?);
         }
 
+        let (tx, rx): (Sender<LogEntry>, Receiver<LogEntry>) = mpsc::channel();
+        thread::Builder::new()
+            .name("logger".to_string())
+            .spawn(move || {
+                log(&rx);
+            })
+            .unwrap();
+
         Ok(Self {
             rules,
-            ..Firewall::default()
+            enabled: true,
+            policy_in: FirewallAction::default(),
+            policy_out: FirewallAction::default(),
+            log_console: true,
+            log_db: true,
+            tx,
         })
     }
 
@@ -179,6 +197,10 @@ impl Firewall {
     /// * `packet` - Raw network packet bytes, including headers and payload.
     ///
     /// * `direction` - The network packet direction (incoming or outgoing).
+    ///
+    /// # Panics
+    ///
+    /// Will panic if the logger routine of the firewall aborts for some reason.
     ///
     /// # Examples
     ///
@@ -225,7 +247,10 @@ impl Firewall {
         }
 
         // send the log entry to the logger thread
-        // let log_entry = LogEntry::new(fields, direction, action);
+        let log_entry = LogEntry::new(fields, direction, action);
+        self.tx
+            .send(log_entry)
+            .expect("the firewall logger routine aborted");
 
         action
     }
@@ -331,19 +356,6 @@ impl Firewall {
     }
 }
 
-impl Default for Firewall {
-    fn default() -> Self {
-        Self {
-            rules: vec![],
-            enabled: true,
-            policy_in: FirewallAction::default(),
-            policy_out: FirewallAction::default(),
-            log_console: true,
-            log_db: true,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::utils::raw_packets::test_packets::{
@@ -370,26 +382,25 @@ mod tests {
             FirewallRule::new("OUT REJECT").unwrap(),
             FirewallRule::new("IN ACCEPT").unwrap(),
         ];
-        let mut firewall = Firewall {
-            rules,
-            enabled: true,
-            policy_in: FirewallAction::default(),
-            policy_out: FirewallAction::default(),
-            log_console: true,
-            log_db: true,
-        };
 
-        assert_eq!(Firewall::new(TEST_FILE_1).unwrap(), firewall);
+        let mut firewall_from_file = Firewall::new(TEST_FILE_1).unwrap();
 
-        firewall.disable();
-        firewall.set_policy_in(FirewallAction::DENY);
-        firewall.set_policy_out(FirewallAction::REJECT);
-        assert!(!firewall.enabled);
-        assert_eq!(firewall.policy_in, FirewallAction::DENY);
-        assert_eq!(firewall.policy_out, FirewallAction::REJECT);
+        assert_eq!(firewall_from_file.rules, rules);
+        assert!(firewall_from_file.log_db);
+        assert!(firewall_from_file.log_console);
+        assert!(firewall_from_file.enabled);
+        assert_eq!(firewall_from_file.policy_out, FirewallAction::default());
+        assert_eq!(firewall_from_file.policy_in, FirewallAction::default());
 
-        firewall.enable();
-        assert!(firewall.enabled);
+        firewall_from_file.disable();
+        firewall_from_file.set_policy_in(FirewallAction::DENY);
+        firewall_from_file.set_policy_out(FirewallAction::REJECT);
+        assert!(!firewall_from_file.enabled);
+        assert_eq!(firewall_from_file.policy_in, FirewallAction::DENY);
+        assert_eq!(firewall_from_file.policy_out, FirewallAction::REJECT);
+
+        firewall_from_file.enable();
+        assert!(firewall_from_file.enabled);
     }
 
     #[test]

@@ -30,7 +30,7 @@ impl Display for LogEntry {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} {:?} {:?} {} {} {} {} {} {}",
+            "{} {:?} {:?} {} {} {} {} {} {} {}",
             self.timestamp,
             self.direction,
             self.action,
@@ -39,6 +39,7 @@ impl Display for LogEntry {
             format_ip_address(self.fields.dest),
             format_port(self.fields.sport),
             format_port(self.fields.dport),
+            format_icmp_type(self.fields.icmp_type),
             self.fields.size,
         )
     }
@@ -47,6 +48,14 @@ impl Display for LogEntry {
 fn format_port(port: Option<u16>) -> String {
     if let Some(p) = port {
         p.to_string()
+    } else {
+        "-".to_string()
+    }
+}
+
+fn format_icmp_type(icmp_type: Option<u8>) -> String {
+    if let Some(i) = icmp_type {
+        i.to_string()
     } else {
         "-".to_string()
     }
