@@ -7,7 +7,7 @@ use std::sync::mpsc::Receiver;
 //     db_batch
 // }
 
-const DB_PATH: &str = "./samples/log.sqlite";
+const DB_PATH: &str = "./log.sqlite";
 
 pub(crate) fn log(rx: &Receiver<LogEntry>) {
     let db = Connection::open(DB_PATH).unwrap();
