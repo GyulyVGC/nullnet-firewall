@@ -30,8 +30,8 @@ impl Display for LogEntry {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{:?} {:?} {} {} {} {} {} {} {}",
-            // self.timestamp,
+            "{} {:?} {:?} {} {} {} {} {} {} {}",
+            self.timestamp,
             self.direction,
             self.action,
             Proto::from_number(self.fields.proto),
