@@ -12,7 +12,7 @@ const DB_PATH: &str = "./samples/log.sqlite";
 pub(crate) fn log(rx: &Receiver<LogEntry>) {
     let db = Connection::open(DB_PATH).unwrap();
     db.execute(
-        "CREATE TABLE IF NOT EXIST traffic (
+        "CREATE TABLE IF NOT EXISTS traffic (
             id        INTEGER PRIMARY KEY,
             timestamp TEXT NOT NULL,
             direction TEXT NOT NULL,
