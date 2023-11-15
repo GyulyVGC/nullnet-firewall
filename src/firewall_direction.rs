@@ -1,3 +1,6 @@
+use rusqlite::types::ToSqlOutput;
+use rusqlite::ToSql;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use crate::FirewallError;
@@ -22,6 +25,18 @@ impl FromStr for FirewallDirection {
             "OUT" => Ok(Self::OUT),
             x => Err(FirewallError::InvalidDirection(x.to_owned())),
         }
+    }
+}
+
+impl Display for FirewallDirection {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+impl ToSql for FirewallDirection {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(self.to_string().into())
     }
 }
 

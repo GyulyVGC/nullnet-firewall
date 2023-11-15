@@ -5,10 +5,10 @@ use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 
 pub(crate) struct LogEntry {
-    timestamp: DateTime<Local>,
-    direction: FirewallDirection,
-    action: FirewallAction,
-    fields: Fields,
+    pub(crate) timestamp: DateTime<Local>,
+    pub(crate) direction: FirewallDirection,
+    pub(crate) action: FirewallAction,
+    pub(crate) fields: Fields,
 }
 
 impl LogEntry {
@@ -61,7 +61,7 @@ fn format_icmp_type(icmp_type: Option<u8>) -> String {
     }
 }
 
-fn format_ip_address(addr: Option<IpAddr>) -> String {
+pub(crate) fn format_ip_address(addr: Option<IpAddr>) -> String {
     if let Some(ip_addr) = addr {
         match ip_addr {
             IpAddr::V4(ip) => format_ipv4_address(ip.octets()),

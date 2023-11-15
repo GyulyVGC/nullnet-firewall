@@ -18,3 +18,4 @@ strip = true
 [dependencies]
 etherparse = "0.13.0"
 chrono = { version = "0.4.31", default_features = false, features = ["clock"] }
+rusqlite = "0.30.0"

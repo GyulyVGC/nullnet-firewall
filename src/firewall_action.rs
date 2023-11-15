@@ -1,3 +1,6 @@
+use rusqlite::types::ToSqlOutput;
+use rusqlite::ToSql;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use crate::FirewallError;
@@ -28,6 +31,18 @@ impl FromStr for FirewallAction {
             "REJECT" => Ok(Self::REJECT),
             x => Err(FirewallError::InvalidAction(x.to_owned())),
         }
+    }
+}
+
+impl Display for FirewallAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+impl ToSql for FirewallAction {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(self.to_string().into())
     }
 }
 
