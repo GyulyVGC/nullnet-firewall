@@ -1,6 +1,6 @@
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
-use chrono::{DateTime, Utc};
+// use chrono::{DateTime, Utc};
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 
