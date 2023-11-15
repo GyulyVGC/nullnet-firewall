@@ -37,7 +37,7 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
 
         // log into db
         db.execute(
-            "INSERT INTO traffic (timestamp, direction, action, proto, source, dest, sport, dport, icmp-type, size)
+            "INSERT INTO traffic (timestamp, direction, action, proto, source, dest, sport, dport, icmptype, size)
                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             (&log_entry.timestamp.to_string(), &log_entry.direction, &log_entry.action, &log_entry.fields.proto,
             format_ip_address(log_entry.fields.source), format_ip_address(log_entry.fields.dest),
