@@ -247,7 +247,7 @@ impl Firewall {
         }
 
         // send the log entry to the logger thread
-        let log_entry = LogEntry::new(fields, direction, action);
+        let log_entry = LogEntry::new(&fields, direction, action);
         self.tx
             .send(log_entry)
             .expect("the firewall logger routine aborted");

@@ -1,46 +1,69 @@
+use crate::logs::log_ip::LogIp;
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
-use chrono::{DateTime, Local};
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
+use crate::logs::log_timestamp::LogTimestamp;
 
 pub(crate) struct LogEntry {
-    pub(crate) timestamp: DateTime<Local>,
+    pub(crate) timestamp: LogTimestamp,
     pub(crate) direction: FirewallDirection,
     pub(crate) action: FirewallAction,
-    pub(crate) fields: Fields,
+    pub(crate) source: Option<LogIp>,
+    pub(crate) dest: Option<LogIp>,
+    pub(crate) sport: Option<u16>,
+    pub(crate) dport: Option<u16>,
+    pub(crate) proto: Option<u8>,
+    pub(crate) icmp_type: Option<u8>,
+    pub(crate) size: usize,
 }
 
 impl LogEntry {
     pub(crate) fn new(
-        fields: Fields,
+        fields: &Fields,
         direction: FirewallDirection,
         action: FirewallAction,
     ) -> LogEntry {
         LogEntry {
-            timestamp: chrono::offset::Local::now(),
+            timestamp: LogTimestamp::from_date_time(chrono::offset::Local::now()),
             direction,
             action,
-            fields,
+            source: LogIp::from_ip_addr(fields.source),
+            dest: LogIp::from_ip_addr(fields.dest),
+            sport: fields.sport,
+            dport: fields.dport,
+            proto: fields.proto,
+            icmp_type: fields.icmp_type,
+            size: fields.size
         }
     }
 }
 
 impl Display for LogEntry {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let source = if let Some(s) = &self.source {
+            s.to_string()
+        } else {
+            "-".to_string()
+        };
+        let dest = if let Some(d) = &self.dest {
+            d.to_string()
+        } else {
+            "-".to_string()
+        };
         write!(
             f,
-            "{} {:?} {:?} {} {} {} {} {} {} {}",
+            "{} {} {} {} {} {} {} {} {} {}",
             self.timestamp,
             self.direction,
             self.action,
-            Proto::from_number(self.fields.proto),
-            format_ip_address(self.fields.source),
-            format_ip_address(self.fields.dest),
-            format_port(self.fields.sport),
-            format_port(self.fields.dport),
-            format_icmp_type(self.fields.icmp_type),
-            self.fields.size,
+            Proto::from_number(self.proto),
+            source,
+            dest,
+            format_port(self.sport),
+            format_port(self.dport),
+            format_icmp_type(self.icmp_type),
+            self.size,
         )
     }
 }
@@ -61,14 +84,10 @@ fn format_icmp_type(icmp_type: Option<u8>) -> String {
     }
 }
 
-pub(crate) fn format_ip_address(addr: Option<IpAddr>) -> String {
-    if let Some(ip_addr) = addr {
-        match ip_addr {
-            IpAddr::V4(ip) => format_ipv4_address(ip.octets()),
-            IpAddr::V6(ip) => format_ipv6_address(ip.octets()),
-        }
-    } else {
-        "-".to_string()
+pub(crate) fn format_ip_address(addr: IpAddr) -> String {
+    match addr {
+        IpAddr::V4(ip) => format_ipv4_address(ip.octets()),
+        IpAddr::V6(ip) => format_ipv6_address(ip.octets()),
     }
 }
 

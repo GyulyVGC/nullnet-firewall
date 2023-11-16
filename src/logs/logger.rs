@@ -1,18 +1,26 @@
-use crate::logs::log_entry::format_ip_address;
 use crate::LogEntry;
-use rusqlite::Connection;
+use rusqlite::{Connection};
 use std::sync::mpsc::Receiver;
 
-// struct Logger {
-//     db_batch
-// }
+struct Logger {
+    db: Connection,
+    batch: Vec<LogEntry>,
+    batch_size: u32,
+}
 
-const DB_PATH: &str = "./log.sqlite";
+impl Logger {
+    fn new(batch_size: u32) -> Logger {
+        Logger {
+            db: Connection::open("./log.sqlite").unwrap(),
+            batch: Vec::new(),
+            batch_size,
+        }
+    }
 
-pub(crate) fn log(rx: &Receiver<LogEntry>) {
-    let db = Connection::open(DB_PATH).unwrap();
-    db.execute(
-        "CREATE TABLE IF NOT EXISTS traffic (
+    fn create_table(&self) {
+        self.db
+            .execute(
+                "CREATE TABLE IF NOT EXISTS traffic (
             id        INTEGER PRIMARY KEY,
             timestamp TEXT NOT NULL,
             direction TEXT NOT NULL,
@@ -20,14 +28,30 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
             proto     TEXT,
             source    TEXT,
             dest      TEXT,
-            sport     TEXT,
-            dport     TEXT,
-            icmptype TEXT,
+            sport     INTEGER,
+            dport     INTEGER,
+            icmptype  TEXT,
             size      INTEGER NOT NULL
         )",
-        (),
-    )
-    .unwrap();
+                (),
+            )
+            .unwrap();
+    }
+
+    fn add_entry(&self, log_entry: LogEntry) {
+        self.db.execute(
+            "INSERT INTO traffic (timestamp, direction, action, proto, source, dest, sport, dport, icmptype, size)
+                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+            (&log_entry.timestamp.to_string(), &log_entry.direction, &log_entry.action,
+             &log_entry.proto, log_entry.source, log_entry.dest, &log_entry.sport,
+             &log_entry.dport, &log_entry.icmp_type, &log_entry.size),
+        ).unwrap();
+    }
+}
+
+pub(crate) fn log(rx: &Receiver<LogEntry>) {
+    let logger = Logger::new(10);
+    logger.create_table();
 
     loop {
         let log_entry = rx.recv().expect("channel is down");
@@ -36,12 +60,6 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
         println!("{log_entry}");
 
         // log into db
-        db.execute(
-            "INSERT INTO traffic (timestamp, direction, action, proto, source, dest, sport, dport, icmptype, size)
-                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-            (&log_entry.timestamp.to_string(), &log_entry.direction, &log_entry.action, &log_entry.fields.proto,
-            format_ip_address(log_entry.fields.source), format_ip_address(log_entry.fields.dest),
-            &log_entry.fields.sport, &log_entry.fields.dport, &log_entry.fields.icmp_type, &log_entry.fields.size),
-        ).unwrap();
+        logger.add_entry(log_entry);
     }
 }
