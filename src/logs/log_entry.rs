@@ -1,9 +1,9 @@
 use crate::logs::log_ip::LogIp;
+use crate::logs::log_timestamp::LogTimestamp;
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
-use crate::logs::log_timestamp::LogTimestamp;
 
 pub(crate) struct LogEntry {
     pub(crate) timestamp: LogTimestamp,
@@ -34,7 +34,7 @@ impl LogEntry {
             dport: fields.dport,
             proto: fields.proto,
             icmp_type: fields.icmp_type,
-            size: fields.size
+            size: fields.size,
         }
     }
 }

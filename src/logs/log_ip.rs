@@ -1,7 +1,7 @@
-use std::fmt::{Display, Formatter};
 use crate::logs::log_entry::format_ip_address;
 use rusqlite::types::ToSqlOutput;
 use rusqlite::ToSql;
+use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 
 pub(crate) struct LogIp {
@@ -10,7 +10,7 @@ pub(crate) struct LogIp {
 
 impl LogIp {
     pub(crate) fn from_ip_addr(ip_addr: Option<IpAddr>) -> Option<LogIp> {
-        ip_addr.map(|ip| LogIp {ip})
+        ip_addr.map(|ip| LogIp { ip })
     }
 }
 

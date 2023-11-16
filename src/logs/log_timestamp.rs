@@ -1,7 +1,7 @@
-use std::fmt::{Display, Formatter};
+use chrono::{DateTime, Local};
 use rusqlite::types::ToSqlOutput;
 use rusqlite::ToSql;
-use chrono::{DateTime, Local};
+use std::fmt::{Display, Formatter};
 
 pub(crate) struct LogTimestamp {
     timestamp: DateTime<Local>,
@@ -10,7 +10,7 @@ pub(crate) struct LogTimestamp {
 impl LogTimestamp {
     pub(crate) fn from_date_time(date_time: DateTime<Local>) -> LogTimestamp {
         LogTimestamp {
-            timestamp: date_time
+            timestamp: date_time,
         }
     }
 }
