@@ -324,9 +324,9 @@ impl Firewall {
     /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
     ///
     /// // set the firewall input policy
-    /// firewall.set_policy_in(FirewallAction::DENY);
+    /// firewall.policy_in(FirewallAction::DENY);
     /// ```
-    pub fn set_policy_in(&mut self, policy: FirewallAction) {
+    pub fn policy_in(&mut self, policy: FirewallAction) {
         self.policy_in = policy;
     }
 
@@ -344,13 +344,13 @@ impl Firewall {
     /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
     ///
     /// // set the firewall output policy
-    /// firewall.set_policy_out(FirewallAction::ACCEPT);
+    /// firewall.policy_out(FirewallAction::ACCEPT);
     /// ```
-    pub fn set_policy_out(&mut self, policy: FirewallAction) {
+    pub fn policy_out(&mut self, policy: FirewallAction) {
         self.policy_out = policy;
     }
 
-    pub fn set_logs(&mut self, console: bool, db: bool) {
+    pub fn logs(&mut self, console: bool, db: bool) {
         self.log_console = console;
         self.log_db = db;
     }
@@ -393,8 +393,8 @@ mod tests {
         assert_eq!(firewall_from_file.policy_in, FirewallAction::default());
 
         firewall_from_file.disable();
-        firewall_from_file.set_policy_in(FirewallAction::DENY);
-        firewall_from_file.set_policy_out(FirewallAction::REJECT);
+        firewall_from_file.policy_in(FirewallAction::DENY);
+        firewall_from_file.policy_out(FirewallAction::REJECT);
         assert!(!firewall_from_file.enabled);
         assert_eq!(firewall_from_file.policy_in, FirewallAction::DENY);
         assert_eq!(firewall_from_file.policy_out, FirewallAction::REJECT);
@@ -406,8 +406,8 @@ mod tests {
     #[test]
     fn test_firewall_determine_action_for_packets_file_1() {
         let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
-        firewall.set_policy_in(FirewallAction::DENY);
-        firewall.set_policy_out(FirewallAction::ACCEPT);
+        firewall.policy_in(FirewallAction::DENY);
+        firewall.policy_out(FirewallAction::ACCEPT);
 
         // tcp packet
         assert_eq!(
@@ -443,8 +443,8 @@ mod tests {
     #[test]
     fn test_firewall_determine_action_for_packets_file_2() {
         let mut firewall = Firewall::new(TEST_FILE_2).unwrap();
-        firewall.set_policy_in(FirewallAction::DENY);
-        firewall.set_policy_out(FirewallAction::ACCEPT);
+        firewall.policy_in(FirewallAction::DENY);
+        firewall.policy_out(FirewallAction::ACCEPT);
 
         // tcp packet
         assert_eq!(
@@ -502,8 +502,8 @@ mod tests {
         );
 
         // change default policies
-        firewall.set_policy_in(FirewallAction::DENY);
-        firewall.set_policy_out(FirewallAction::ACCEPT);
+        firewall.policy_in(FirewallAction::DENY);
+        firewall.policy_out(FirewallAction::ACCEPT);
 
         // ipv6 packet
         assert_eq!(
@@ -529,8 +529,8 @@ mod tests {
     #[test]
     fn test_firewall_determine_action_for_packets_while_disabled() {
         let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
-        firewall.set_policy_in(FirewallAction::REJECT); // doesn't matter
-        firewall.set_policy_out(FirewallAction::REJECT); // doesn't matter
+        firewall.policy_in(FirewallAction::REJECT); // doesn't matter
+        firewall.policy_out(FirewallAction::REJECT); // doesn't matter
         firewall.disable(); // always accept
 
         // tcp packet

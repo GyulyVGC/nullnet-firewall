@@ -5,15 +5,16 @@ use std::sync::mpsc::Receiver;
 struct Logger {
     db: Connection,
     batch: Vec<LogEntry>,
-    batch_size: u32,
 }
 
 impl Logger {
-    fn new(batch_size: u32) -> Logger {
+    // should be in the order of thousands when used in production
+    const BATCH_SIZE: usize = 25;
+
+    fn new() -> Logger {
         Logger {
             db: Connection::open("./log.sqlite").unwrap(),
             batch: Vec::new(),
-            batch_size,
         }
     }
 
@@ -38,19 +39,32 @@ impl Logger {
             .unwrap();
     }
 
-    fn add_entry(&self, log_entry: LogEntry) {
-        self.db.execute(
-            "INSERT INTO traffic (timestamp, direction, action, proto, source, dest, sport, dport, icmptype, size)
-                VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-            (&log_entry.timestamp.to_string(), &log_entry.direction, &log_entry.action,
-             &log_entry.proto, log_entry.source, log_entry.dest, &log_entry.sport,
-             &log_entry.dport, &log_entry.icmp_type, &log_entry.size),
-        ).unwrap();
+    fn add_entry(&mut self, log_entry: LogEntry) {
+        self.batch.push(log_entry);
+        if self.batch.len() >= Logger::BATCH_SIZE {
+            // write the batch to the DB in a single transaction
+            self.store_batch();
+            self.batch = Vec::new();
+        }
+    }
+
+    fn store_batch(&mut self) {
+        let transaction = self.db.transaction().unwrap();
+        for log_entry in self.batch {
+            transaction.execute(
+                "INSERT INTO traffic (timestamp, direction, action, proto, source, dest, sport, dport, icmptype, size)
+                    VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                (&log_entry.timestamp.to_string(), &log_entry.direction, &log_entry.action,
+                 &log_entry.proto, log_entry.source, log_entry.dest, &log_entry.sport,
+                 &log_entry.dport, &log_entry.icmp_type, &log_entry.size),
+            ).unwrap();
+        }
+        transaction.commit().unwrap();
     }
 }
 
 pub(crate) fn log(rx: &Receiver<LogEntry>) {
-    let logger = Logger::new(10);
+    let mut logger = Logger::new();
     logger.create_table();
 
     loop {
