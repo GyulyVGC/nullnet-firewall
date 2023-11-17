@@ -164,12 +164,6 @@ impl Firewall {
     /// IN ACCEPT
     /// ```
     pub fn new(file_path: &str) -> Result<Self, FirewallError> {
-        let mut rules = Vec::new();
-        let file = File::open(file_path).unwrap();
-        for firewall_rule_str in BufReader::new(file).lines().flatten() {
-            rules.push(FirewallRule::new(&firewall_rule_str)?);
-        }
-
         let (tx, rx): (Sender<LogEntry>, Receiver<LogEntry>) = mpsc::channel();
         thread::Builder::new()
             .name("logger".to_string())
@@ -178,15 +172,19 @@ impl Firewall {
             })
             .unwrap();
 
-        Ok(Self {
-            rules,
+        let mut firewall = Firewall {
+            rules: Vec::new(),
             enabled: true,
             policy_in: FirewallAction::default(),
             policy_out: FirewallAction::default(),
             log_console: true,
             log_db: true,
             tx,
-        })
+        };
+
+        firewall.update_rules(file_path)?;
+
+        Ok(firewall)
     }
 
     /// Returns the action to be taken for a supplied network packet,
@@ -253,6 +251,16 @@ impl Firewall {
             .expect("the firewall logger routine aborted");
 
         action
+    }
+
+    pub fn update_rules(&mut self, file_path: &str) -> Result<(), FirewallError> {
+        let mut rules = Vec::new();
+        let file = File::open(file_path).unwrap();
+        for firewall_rule_str in BufReader::new(file).lines().flatten() {
+            rules.push(FirewallRule::new(&firewall_rule_str)?);
+        }
+        self.rules = rules;
+        Ok(())
     }
 
     /// Disables an existing [`Firewall`].
