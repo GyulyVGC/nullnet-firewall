@@ -130,6 +130,8 @@ pub struct Firewall {
 }
 
 impl Firewall {
+    const COMMENT: char = '#';
+
     /// Instantiates a new [`Firewall`] from a file.
     ///
     /// # Arguments
@@ -235,12 +237,12 @@ impl Firewall {
         let fields = Fields::new(packet);
 
         // determine action for packet
-        let mut current_specificity = 0;
         for rule in &self.rules {
-            if rule.matches_packet(&fields, &direction) && rule.specificity() >= current_specificity
-            {
-                current_specificity = rule.specificity();
+            if rule.matches_packet(&fields, &direction) {
                 action = rule.action;
+                if rule.quick {
+                    break;
+                }
             }
         }
 
@@ -256,7 +258,11 @@ impl Firewall {
     pub fn update_rules(&mut self, file_path: &str) -> Result<(), FirewallError> {
         let mut rules = Vec::new();
         let file = File::open(file_path).unwrap();
-        for firewall_rule_str in BufReader::new(file).lines().flatten() {
+        for firewall_rule_str in BufReader::new(file)
+            .lines()
+            .flatten()
+            .filter(|l| !l.trim().starts_with(Self::COMMENT) && !l.trim().is_empty())
+        {
             rules.push(FirewallRule::new(&firewall_rule_str)?);
         }
         self.rules = rules;
@@ -381,10 +387,10 @@ mod tests {
         let rules = vec![
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080").unwrap(),
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080 --dport 1,2,2000").unwrap(),
-            FirewallRule::new("OUT DENY --source 192.168.200.135-192.168.200.140 --sport 6700:6800,8080 --dport 1,2,2000").unwrap(),
+            FirewallRule::new("+ OUT DENY --source 192.168.200.135-192.168.200.140 --sport 6700:6800,8080 --dport 1,2,2000").unwrap(),
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6750:6800,8080 --dest 192.168.200.21 --dport 1,2,2000").unwrap(),
             FirewallRule::new("IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1").unwrap(),
-            FirewallRule::new("IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8").unwrap(),
+            FirewallRule::new("+ IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8").unwrap(),
             FirewallRule::new("IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 9").unwrap(),
             FirewallRule::new("IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 58 --icmp-type 8").unwrap(),
             FirewallRule::new("OUT REJECT").unwrap(),
@@ -492,7 +498,7 @@ mod tests {
         // ipv6 packet
         assert_eq!(
             firewall.resolve_packet(&UDP_IPV6_PACKET, FirewallDirection::IN),
-            FirewallAction::REJECT
+            FirewallAction::DENY
         );
         assert_eq!(
             firewall.resolve_packet(&UDP_IPV6_PACKET, FirewallDirection::OUT),
@@ -516,7 +522,7 @@ mod tests {
         // ipv6 packet
         assert_eq!(
             firewall.resolve_packet(&UDP_IPV6_PACKET, FirewallDirection::IN),
-            FirewallAction::REJECT
+            FirewallAction::DENY
         );
         assert_eq!(
             firewall.resolve_packet(&UDP_IPV6_PACKET, FirewallDirection::OUT),

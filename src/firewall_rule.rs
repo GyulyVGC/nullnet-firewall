@@ -13,16 +13,29 @@ pub(crate) struct FirewallRule {
     pub(crate) action: FirewallAction,
     /// Rule options
     pub(crate) options: Vec<FirewallOption>,
+    /// Is this a quick rule?
+    pub(crate) quick: bool,
 }
 
 impl FirewallRule {
     const SEPARATOR: char = ' ';
+    const QUICK: char = '+';
 
     pub(crate) fn new(rule_str: &str) -> Result<Self, FirewallError> {
         let mut parts = rule_str.split(Self::SEPARATOR).filter(|s| !s.is_empty());
+        let mut quick = false;
+
+        let first = parts.next().ok_or(FirewallError::NotEnoughArguments)?;
+        if first.eq(&Self::QUICK.to_string()) {
+            quick = true;
+        }
 
         // rule direction
-        let direction_str = parts.next().ok_or(FirewallError::NotEnoughArguments)?;
+        let direction_str = if quick {
+            parts.next().ok_or(FirewallError::NotEnoughArguments)?
+        } else {
+            first
+        };
         let direction = FirewallDirection::from_str(direction_str)?;
 
         // rule action
@@ -52,6 +65,7 @@ impl FirewallRule {
             direction,
             action,
             options,
+            quick,
         })
     }
 
@@ -62,10 +76,6 @@ impl FirewallRule {
             }
         }
         self.direction.eq(direction)
-    }
-
-    pub(crate) fn specificity(&self) -> usize {
-        self.options.len()
     }
 
     fn validate_options(options: &Vec<FirewallOption>) -> Result<(), FirewallError> {
@@ -114,7 +124,8 @@ mod tests {
             FirewallRule {
                 direction: FirewallDirection::OUT,
                 action: FirewallAction::REJECT,
-                options: vec![]
+                options: vec![],
+                quick: false
             }
         );
 
@@ -125,7 +136,8 @@ mod tests {
                 action: FirewallAction::DENY,
                 options: vec![FirewallOption::Dest(
                     IpCollection::new(FirewallOption::SOURCE, "8.8.8.8-8.8.8.10").unwrap()
-                )]
+                )],
+                quick: false
             }
         );
 
@@ -142,7 +154,8 @@ mod tests {
                     FirewallOption::Dport(
                         PortCollection::new(FirewallOption::DPORT, "900:1000,1,2,3").unwrap()
                     )
-                ]
+                ],
+                quick: false
             }
         );
 
@@ -156,7 +169,8 @@ mod tests {
                     FirewallOption::Dport(PortCollection::new(FirewallOption::DPORT, "900:1000,1,2,3").unwrap()),
                     FirewallOption::IcmpType(8),
                     FirewallOption::Proto(1)
-                ]
+                ],
+                quick: false
             }
         );
 
@@ -177,7 +191,8 @@ mod tests {
                     ),
                     FirewallOption::IcmpType(1),
                     FirewallOption::Proto(58)
-                ]
+                ],
+                quick: false
             }
         );
     }
@@ -419,5 +434,48 @@ mod tests {
             FirewallRule::new("IN ACCEPT --source 3ffe:501:4819::47,3ffe:501:4819::49").unwrap();
         assert!(!rule_10_ko.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
         assert!(!rule_10_ko.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));
+    }
+
+    #[test]
+    fn test_quick_rules() {
+        assert_eq!(
+            FirewallRule::new("+ IN DENY --dest 8.8.8.8-8.8.8.10").unwrap(),
+            FirewallRule {
+                direction: FirewallDirection::IN,
+                action: FirewallAction::DENY,
+                options: vec![FirewallOption::Dest(
+                    IpCollection::new(FirewallOption::SOURCE, "8.8.8.8-8.8.8.10").unwrap()
+                )],
+                quick: true
+            }
+        );
+
+        assert_eq!(
+            FirewallRule::new("    +       IN DENY --dest 8.8.8.8-8.8.8.10").unwrap(),
+            FirewallRule {
+                direction: FirewallDirection::IN,
+                action: FirewallAction::DENY,
+                options: vec![FirewallOption::Dest(
+                    IpCollection::new(FirewallOption::SOURCE, "8.8.8.8-8.8.8.10").unwrap()
+                )],
+                quick: true
+            }
+        );
+
+        let err = FirewallRule::new(
+            "+OUT ACCEPT --dport 8 --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3",
+        )
+        .unwrap_err();
+        assert_eq!(err, FirewallError::InvalidDirection("+OUT".to_owned()));
+
+        assert_eq!(
+            FirewallRule::new("- IN DENY --dest 8.8.8.8-8.8.8.10"),
+            Err(FirewallError::InvalidDirection("-".to_string()))
+        );
+
+        assert_eq!(
+            FirewallRule::new("# IN DENY --dest 8.8.8.8-8.8.8.10"),
+            Err(FirewallError::InvalidDirection("#".to_string()))
+        );
     }
 }
