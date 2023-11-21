@@ -54,7 +54,7 @@ impl Logger {
             transaction.execute(
                 "INSERT INTO traffic (timestamp, direction, action, proto, source, dest, sport, dport, icmptype, size)
                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-                (&log_entry.timestamp.to_string(), &log_entry.direction, &log_entry.action,
+                (&log_entry.timestamp, &log_entry.direction, &log_entry.action,
                  &log_entry.proto, &log_entry.source, &log_entry.dest, &log_entry.sport,
                  &log_entry.dport, &log_entry.icmp_type, &log_entry.size),
             ).unwrap();

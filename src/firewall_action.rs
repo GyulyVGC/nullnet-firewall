@@ -49,6 +49,9 @@ impl ToSql for FirewallAction {
 #[cfg(test)]
 mod tests {
     use crate::{FirewallAction, FirewallError};
+    use rusqlite::types::ToSqlOutput;
+    use rusqlite::types::Value::Text;
+    use rusqlite::ToSql;
     use std::str::FromStr;
 
     #[test]
@@ -66,5 +69,23 @@ mod tests {
         let err = FirewallAction::from_str("DROP").unwrap_err();
         assert_eq!(err, FirewallError::InvalidAction("DROP".to_owned()));
         assert_eq!(err.to_string(), "Firewall error - incorrect action 'DROP'");
+    }
+
+    #[test]
+    fn test_firewall_actions_to_sql() {
+        assert_eq!(
+            FirewallAction::to_sql(&FirewallAction::ACCEPT),
+            Ok(ToSqlOutput::Owned(Text("ACCEPT".to_string())))
+        );
+
+        assert_eq!(
+            FirewallAction::to_sql(&FirewallAction::DENY),
+            Ok(ToSqlOutput::Owned(Text("DENY".to_string())))
+        );
+
+        assert_eq!(
+            FirewallAction::to_sql(&FirewallAction::REJECT),
+            Ok(ToSqlOutput::Owned(Text("REJECT".to_string())))
+        );
     }
 }

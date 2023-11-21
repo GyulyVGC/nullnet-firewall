@@ -31,8 +31,6 @@ pub enum FirewallError {
     NotEnoughArguments,
     /// The option `--icmp-type` is valid only if `--proto 1` or `--proto 58` is also specified.
     NotApplicableIcmpType,
-    /// Logger error
-    LoggerAborted,
 }
 
 impl Display for FirewallError {
@@ -84,7 +82,6 @@ impl Display for FirewallError {
                     FirewallOption::PROTO
                 )
             }
-            FirewallError::LoggerAborted => "a problem occurred in the logger routine".to_string(),
         };
 
         write!(f, "Firewall error - {err_info}")

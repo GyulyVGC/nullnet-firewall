@@ -43,6 +43,9 @@ impl ToSql for FirewallDirection {
 #[cfg(test)]
 mod tests {
     use crate::{FirewallDirection, FirewallError};
+    use rusqlite::types::ToSqlOutput;
+    use rusqlite::types::Value::Text;
+    use rusqlite::ToSql;
     use std::str::FromStr;
 
     #[test]
@@ -58,6 +61,19 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "Firewall error - incorrect direction 'UNDER'"
+        );
+    }
+
+    #[test]
+    fn test_firewall_direction_to_sql() {
+        assert_eq!(
+            FirewallDirection::to_sql(&FirewallDirection::IN),
+            Ok(ToSqlOutput::Owned(Text("IN".to_string())))
+        );
+
+        assert_eq!(
+            FirewallDirection::to_sql(&FirewallDirection::OUT),
+            Ok(ToSqlOutput::Owned(Text("OUT".to_string())))
         );
     }
 }

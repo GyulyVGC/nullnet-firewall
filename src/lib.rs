@@ -118,14 +118,11 @@ mod utils;
 /// the action to be taken for a given network packet.
 ///
 /// A new `Firewall` can be created from a textual file listing a set of rule.
-#[derive(Debug)]
 pub struct Firewall {
     rules: Vec<FirewallRule>,
     enabled: bool,
     policy_in: FirewallAction,
     policy_out: FirewallAction,
-    log_console: bool,
-    log_db: bool,
     tx: Sender<LogEntry>,
 }
 
@@ -179,8 +176,6 @@ impl Firewall {
             enabled: true,
             policy_in: FirewallAction::default(),
             policy_out: FirewallAction::default(),
-            log_console: true,
-            log_db: true,
             tx,
         };
 
@@ -363,11 +358,6 @@ impl Firewall {
     pub fn policy_out(&mut self, policy: FirewallAction) {
         self.policy_out = policy;
     }
-
-    pub fn logs(&mut self, console: bool, db: bool) {
-        self.log_console = console;
-        self.log_db = db;
-    }
 }
 
 #[cfg(test)]
@@ -400,8 +390,6 @@ mod tests {
         let mut firewall_from_file = Firewall::new(TEST_FILE_1).unwrap();
 
         assert_eq!(firewall_from_file.rules, rules);
-        assert!(firewall_from_file.log_db);
-        assert!(firewall_from_file.log_console);
         assert!(firewall_from_file.enabled);
         assert_eq!(firewall_from_file.policy_out, FirewallAction::default());
         assert_eq!(firewall_from_file.policy_in, FirewallAction::default());
