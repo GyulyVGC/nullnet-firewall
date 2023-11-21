@@ -223,10 +223,7 @@ impl Firewall {
             return FirewallAction::ACCEPT;
         }
 
-        let mut action = match direction {
-            FirewallDirection::IN => self.policy_in,
-            FirewallDirection::OUT => self.policy_out,
-        };
+        let mut action_opt = None;
 
         // structure the packet as a set of relevant fields
         let fields = Fields::new(packet);
@@ -234,12 +231,19 @@ impl Firewall {
         // determine action for packet
         for rule in &self.rules {
             if rule.matches_packet(&fields, &direction) {
-                action = rule.action;
                 if rule.quick {
+                    action_opt = Some(rule.action);
                     break;
+                } else if action_opt.is_none() {
+                    action_opt = Some(rule.action);
                 }
             }
         }
+
+        let action = action_opt.unwrap_or(match direction {
+            FirewallDirection::IN => self.policy_in,
+            FirewallDirection::OUT => self.policy_out,
+        });
 
         // send the log entry to the logger thread
         let log_entry = LogEntry::new(&fields, direction, action);
@@ -365,8 +369,10 @@ mod tests {
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
-    use crate::Firewall;
+    use crate::{Firewall, LogEntry};
     use crate::{FirewallAction, FirewallDirection, FirewallRule};
+    use std::sync::mpsc;
+    use std::sync::mpsc::{Receiver, Sender};
 
     const TEST_FILE_1: &str = "./samples/firewall_for_tests_1.txt";
     const TEST_FILE_2: &str = "./samples/firewall_for_tests_2.txt";
@@ -379,7 +385,7 @@ mod tests {
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080 --dport 1,2,2000").unwrap(),
             FirewallRule::new("+ OUT DENY --source 192.168.200.135-192.168.200.140 --sport 6700:6800,8080 --dport 1,2,2000").unwrap(),
             FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6750:6800,8080 --dest 192.168.200.21 --dport 1,2,2000").unwrap(),
-            FirewallRule::new("IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1").unwrap(),
+            FirewallRule::new("IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8").unwrap(),
             FirewallRule::new("+ IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8").unwrap(),
             FirewallRule::new("IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 9").unwrap(),
             FirewallRule::new("IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 58 --icmp-type 8").unwrap(),
@@ -461,7 +467,7 @@ mod tests {
         // icmp packet
         assert_eq!(
             firewall.resolve_packet(&ICMP_PACKET, FirewallDirection::IN),
-            FirewallAction::REJECT
+            FirewallAction::ACCEPT
         );
         assert_eq!(
             firewall.resolve_packet(&ICMP_PACKET, FirewallDirection::OUT),
@@ -490,7 +496,7 @@ mod tests {
         );
         assert_eq!(
             firewall.resolve_packet(&UDP_IPV6_PACKET, FirewallDirection::OUT),
-            FirewallAction::DENY
+            FirewallAction::ACCEPT
         );
 
         // tcp packet
@@ -505,7 +511,7 @@ mod tests {
 
         // change default policies
         firewall.policy_in(FirewallAction::DENY);
-        firewall.policy_out(FirewallAction::ACCEPT);
+        firewall.policy_out(FirewallAction::REJECT);
 
         // ipv6 packet
         assert_eq!(
@@ -514,7 +520,7 @@ mod tests {
         );
         assert_eq!(
             firewall.resolve_packet(&UDP_IPV6_PACKET, FirewallDirection::OUT),
-            FirewallAction::DENY
+            FirewallAction::ACCEPT
         );
 
         // tcp packet
@@ -524,7 +530,7 @@ mod tests {
         );
         assert_eq!(
             firewall.resolve_packet(&TCP_PACKET, FirewallDirection::OUT),
-            FirewallAction::ACCEPT
+            FirewallAction::REJECT
         );
     }
 
@@ -563,6 +569,109 @@ mod tests {
         assert_eq!(
             firewall.resolve_packet(&ARP_PACKET, FirewallDirection::OUT),
             FirewallAction::ACCEPT
+        );
+    }
+
+    #[test]
+    fn test_firewall_rules_precedence() {
+        let (tx, _rx): (Sender<LogEntry>, Receiver<LogEntry>) = mpsc::channel();
+        let mut firewall = Firewall {
+            rules: vec![],
+            enabled: true,
+            policy_in: Default::default(),
+            policy_out: Default::default(),
+            tx,
+        };
+
+        let rules_1 = vec![
+            // no quick, first match wins
+            FirewallRule::new("OUT DENY --source 192.168.200.135 --sport 6700:6800,8080").unwrap(),
+            FirewallRule::new("OUT ACCEPT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+            FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+        ];
+        firewall = Firewall {
+            rules: rules_1,
+            ..firewall
+        };
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET, FirewallDirection::OUT),
+            FirewallAction::DENY
+        );
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET, FirewallDirection::IN),
+            FirewallAction::default()
+        );
+
+        let rules_2 = vec![
+            // quick match wins
+            FirewallRule::new("+ OUT DENY --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+            FirewallRule::new("OUT ACCEPT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+            FirewallRule::new("OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+        ];
+        firewall = Firewall {
+            rules: rules_2,
+            ..firewall
+        };
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET, FirewallDirection::OUT),
+            FirewallAction::DENY
+        );
+
+        let rules_3 = vec![
+            // quick match wins even if after other matches
+            FirewallRule::new("OUT DENY --source 192.168.200.135 --sport 6700:6800,8080").unwrap(),
+            FirewallRule::new("OUT ACCEPT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+            FirewallRule::new("+ OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+        ];
+        firewall = Firewall {
+            rules: rules_3,
+            ..firewall
+        };
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET, FirewallDirection::OUT),
+            FirewallAction::REJECT
+        );
+
+        let rules_4 = vec![
+            // first quick match wins
+            FirewallRule::new("OUT DENY --source 192.168.200.135 --sport 6700:6800,8080").unwrap(),
+            FirewallRule::new("+ OUT ACCEPT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+            FirewallRule::new("+ OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+        ];
+        firewall = Firewall {
+            rules: rules_4,
+            ..firewall
+        };
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET, FirewallDirection::OUT),
+            FirewallAction::ACCEPT
+        );
+
+        let rules_5 = vec![
+            // only quick rulesfirst wins
+            FirewallRule::new("+ OUT DENY --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+            FirewallRule::new("+ OUT ACCEPT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+            FirewallRule::new("+ OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080")
+                .unwrap(),
+        ];
+        firewall = Firewall {
+            rules: rules_5,
+            ..firewall
+        };
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET, FirewallDirection::OUT),
+            FirewallAction::DENY
         );
     }
 }
