@@ -40,10 +40,11 @@ impl Fields {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
-    use crate::Fields;
     use std::net::IpAddr;
     use std::str::FromStr;
+
+    use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
+    use crate::Fields;
 
     #[test]
     fn test_fields_new() {

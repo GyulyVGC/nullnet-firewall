@@ -260,7 +260,8 @@ impl Firewall {
         for firewall_rule_str in BufReader::new(file)
             .lines()
             .flatten()
-            .filter(|l| !l.trim().starts_with(Self::COMMENT) && !l.trim().is_empty())
+            .map(|l| l.trim().to_owned())
+            .filter(|l| !l.starts_with(Self::COMMENT) && !l.is_empty())
         {
             rules.push(FirewallRule::new(&firewall_rule_str)?);
         }
@@ -658,7 +659,7 @@ mod tests {
         );
 
         let rules_5 = vec![
-            // only quick rulesfirst wins
+            // only quick rules, first wins
             FirewallRule::new("+ OUT DENY --source 192.168.200.135 --sport 6700:6800,8080")
                 .unwrap(),
             FirewallRule::new("+ OUT ACCEPT --source 192.168.200.135 --sport 6700:6800,8080")
