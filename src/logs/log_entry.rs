@@ -162,6 +162,8 @@ mod tests {
 
     #[test]
     fn test_log_entry_display() {
+        let timestamp_len = chrono::offset::Local::now().to_string().len();
+
         // tcp packet
         let log_entry_tcp = LogEntry::new(
             &Fields::new(&TCP_PACKET),
@@ -169,7 +171,7 @@ mod tests {
             FirewallAction::DENY,
         );
         assert_eq!(
-            format!("{log_entry_tcp}")[34..].to_string(),
+            format!("{log_entry_tcp}")[timestamp_len + 1..].to_string(),
             "IN DENY TCP 192.168.200.135 192.168.200.21 6711 2000 - 66".to_string()
         );
 
@@ -180,7 +182,7 @@ mod tests {
             FirewallAction::ACCEPT,
         );
         assert_eq!(
-            format!("{log_entry_tcp}")[34..].to_string(),
+            format!("{log_entry_tcp}")[timestamp_len + 1..].to_string(),
             "IN ACCEPT IPv6-ICMP 3ffe:501:4819::42 3ffe:507:0:1:200:86ff:fe05:8da - - 135 86"
                 .to_string()
         );
@@ -192,7 +194,7 @@ mod tests {
             FirewallAction::REJECT,
         );
         assert_eq!(
-            format!("{log_entry_tcp}")[34..].to_string(),
+            format!("{log_entry_tcp}")[timestamp_len + 1..].to_string(),
             "OUT REJECT - - - - - - 42".to_string()
         );
     }
