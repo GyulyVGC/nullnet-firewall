@@ -1,7 +1,8 @@
+use std::fmt::{Display, Formatter};
+
 use chrono::{DateTime, Local};
 use rusqlite::types::ToSqlOutput;
 use rusqlite::ToSql;
-use std::fmt::{Display, Formatter};
 
 #[derive(PartialEq, Debug)]
 pub(crate) struct LogTimestamp {
@@ -30,10 +31,11 @@ impl Display for LogTimestamp {
 
 #[cfg(test)]
 mod tests {
-    use crate::logs::log_timestamp::LogTimestamp;
     use rusqlite::types::ToSqlOutput;
     use rusqlite::types::Value::Text;
     use rusqlite::ToSql;
+
+    use crate::logs::log_timestamp::LogTimestamp;
 
     #[test]
     fn test_log_timestamp_from_date_time() {

@@ -1,6 +1,8 @@
-use crate::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
-use etherparse::PacketHeaders;
 use std::net::IpAddr;
+
+use etherparse::PacketHeaders;
+
+use crate::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
 
 #[derive(Default)]
 pub(crate) struct Fields {

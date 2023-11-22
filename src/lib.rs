@@ -89,13 +89,13 @@
 //! [output policy](Firewall::set_policy_out) can
 //! be overridden for packets that doesn't match any of the firewall rules.
 
-use crate::fields::fields::Fields;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 
+use crate::fields::fields::Fields;
 use crate::fields::ip_header::{get_dest, get_proto, get_source};
 use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
 pub use crate::firewall_action::FirewallAction;
@@ -366,13 +366,14 @@ impl Firewall {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::mpsc;
+    use std::sync::mpsc::{Receiver, Sender};
+
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
     use crate::{Firewall, LogEntry};
     use crate::{FirewallAction, FirewallDirection, FirewallRule};
-    use std::sync::mpsc;
-    use std::sync::mpsc::{Receiver, Sender};
 
     const TEST_FILE_1: &str = "./samples/firewall_for_tests_1.txt";
     const TEST_FILE_2: &str = "./samples/firewall_for_tests_2.txt";

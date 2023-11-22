@@ -1,7 +1,8 @@
-use rusqlite::types::ToSqlOutput;
-use rusqlite::ToSql;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
+use rusqlite::types::ToSqlOutput;
+use rusqlite::ToSql;
 
 use crate::FirewallError;
 
@@ -42,11 +43,13 @@ impl ToSql for FirewallDirection {
 
 #[cfg(test)]
 mod tests {
-    use crate::{FirewallDirection, FirewallError};
+    use std::str::FromStr;
+
     use rusqlite::types::ToSqlOutput;
     use rusqlite::types::Value::Text;
     use rusqlite::ToSql;
-    use std::str::FromStr;
+
+    use crate::{FirewallDirection, FirewallError};
 
     #[test]
     fn test_firewall_directions_from_str() {

@@ -1,7 +1,8 @@
-use rusqlite::types::ToSqlOutput;
-use rusqlite::ToSql;
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
+
+use rusqlite::types::ToSqlOutput;
+use rusqlite::ToSql;
 
 #[derive(PartialEq, Debug)]
 pub(crate) struct LogIp {
@@ -128,12 +129,14 @@ fn format_ipv6_address(ipv6_long: [u8; 16]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::logs::log_ip::{format_ip_address, format_ipv6_address, LogIp};
+    use std::net::IpAddr;
+    use std::str::FromStr;
+
     use rusqlite::types::ToSqlOutput;
     use rusqlite::types::Value::Text;
     use rusqlite::ToSql;
-    use std::net::IpAddr;
-    use std::str::FromStr;
+
+    use crate::logs::log_ip::{format_ip_address, format_ipv6_address, LogIp};
 
     #[test]
     fn test_log_ip_from_ip_addr() {
@@ -161,6 +164,13 @@ mod tests {
     fn test_format_ipv4_address() {
         let result = format_ip_address(IpAddr::from_str("192.168.1.1").unwrap());
         assert_eq!(result, "192.168.1.1".to_string());
+    }
+
+    #[test]
+    fn test_format_ipv6_address() {
+        let result =
+            format_ip_address(IpAddr::from_str("2001:db8:3333:4444:CCCC:DDDD:EEEE:FFFF").unwrap());
+        assert_eq!(result, "2001:db8:3333:4444:cccc:dddd:eeee:ffff".to_string());
     }
 
     #[test]

@@ -1,6 +1,8 @@
-use crate::LogEntry;
-use rusqlite::Connection;
 use std::sync::mpsc::Receiver;
+
+use rusqlite::Connection;
+
+use crate::LogEntry;
 
 struct Logger {
     db: Connection,

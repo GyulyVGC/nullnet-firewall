@@ -1,8 +1,9 @@
+use std::fmt::{Display, Formatter};
+
 use crate::logs::log_ip::LogIp;
 use crate::logs::log_timestamp::LogTimestamp;
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
-use std::fmt::{Display, Formatter};
 
 pub(crate) struct LogEntry {
     pub(crate) timestamp: LogTimestamp,
