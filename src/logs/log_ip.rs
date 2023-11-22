@@ -3,6 +3,7 @@ use rusqlite::ToSql;
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 
+#[derive(PartialEq, Debug)]
 pub(crate) struct LogIp {
     ip: IpAddr,
 }
@@ -15,8 +16,7 @@ impl LogIp {
 
 impl ToSql for LogIp {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        let formatted = format_ip_address(self.ip);
-        Ok(formatted.into())
+        Ok(self.to_string().into())
     }
 }
 
@@ -128,7 +128,40 @@ fn format_ipv6_address(ipv6_long: [u8; 16]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::logs::log_ip::format_ipv6_address;
+    use crate::logs::log_ip::{format_ip_address, format_ipv6_address, LogIp};
+    use rusqlite::types::ToSqlOutput;
+    use rusqlite::types::Value::Text;
+    use rusqlite::ToSql;
+    use std::net::IpAddr;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_log_ip_from_ip_addr() {
+        assert_eq!(LogIp::from_ip_addr(None), None);
+
+        assert_eq!(
+            LogIp::from_ip_addr(Some(IpAddr::from_str("1.2.3.4").unwrap())),
+            Some(LogIp {
+                ip: IpAddr::from_str("1.2.3.4").unwrap()
+            })
+        );
+    }
+
+    #[test]
+    fn test_log_ip_to_sql() {
+        assert_eq!(
+            LogIp::to_sql(&LogIp {
+                ip: IpAddr::from_str("8.8.8.8").unwrap()
+            }),
+            Ok(ToSqlOutput::Owned(Text("8.8.8.8".to_string())))
+        );
+    }
+
+    #[test]
+    fn test_format_ipv4_address() {
+        let result = format_ip_address(IpAddr::from_str("192.168.1.1").unwrap());
+        assert_eq!(result, "192.168.1.1".to_string());
+    }
 
     #[test]
     fn ipv6_simple_test() {

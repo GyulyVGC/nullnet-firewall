@@ -17,7 +17,7 @@ impl LogTimestamp {
 
 impl ToSql for LogTimestamp {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
-        Ok(self.timestamp.to_string().into())
+        Ok(self.to_string().into())
     }
 }
 
