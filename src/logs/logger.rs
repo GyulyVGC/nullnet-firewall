@@ -7,16 +7,18 @@ use crate::LogEntry;
 struct Logger {
     db: Connection,
     batch: Vec<LogEntry>,
+    batch_size: usize,
 }
 
-impl Logger {
-    // should be in the order of thousands when used in production
-    const BATCH_SIZE: usize = 25;
+// should be in the order of thousands when used in production
+const BATCH_SIZE: usize = 25;
 
-    fn new() -> Logger {
+impl Logger {
+    fn new(batch_size: usize) -> Logger {
         Logger {
             db: Connection::open("./log.sqlite").unwrap(),
             batch: Vec::new(),
+            batch_size,
         }
     }
 
@@ -28,12 +30,12 @@ impl Logger {
             timestamp TEXT NOT NULL,
             direction TEXT NOT NULL,
             action    TEXT NOT NULL,
-            proto     TEXT,
+            proto     INTEGER,
             source    TEXT,
             dest      TEXT,
             sport     INTEGER,
             dport     INTEGER,
-            icmptype  TEXT,
+            icmptype  INTEGER,
             size      INTEGER NOT NULL
         )",
                 (),
@@ -43,7 +45,7 @@ impl Logger {
 
     fn add_entry(&mut self, log_entry: LogEntry) {
         self.batch.push(log_entry);
-        if self.batch.len() >= Logger::BATCH_SIZE {
+        if self.batch.len() >= self.batch_size {
             // write the batch to the DB in a single transaction
             self.store_batch();
             self.batch = Vec::new();
@@ -66,7 +68,7 @@ impl Logger {
 }
 
 pub(crate) fn log(rx: &Receiver<LogEntry>) {
-    let mut logger = Logger::new();
+    let mut logger = Logger::new(BATCH_SIZE);
     logger.create_table();
 
     loop {
@@ -77,5 +79,162 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
 
         // log into db
         logger.add_entry(log_entry);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::logs::logger::Logger;
+    use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
+    use crate::{Fields, FirewallAction, FirewallDirection, LogEntry};
+    use rusqlite::Connection;
+
+    fn drop_table(logger: &Logger) {
+        logger
+            .db
+            .execute("DROP TABLE IF EXISTS traffic", ())
+            .unwrap();
+    }
+
+    fn retrieve_all_packets(logger: &Logger) -> Vec<LogEntry> {
+        let mut stmt = logger.db.prepare("SELECT * FROM traffic").unwrap();
+        let query_result = stmt
+            .query_map([], |row| {
+                Ok(LogEntry {
+                    // row.get(0) is the id
+                    timestamp: row.get(1).unwrap(),
+                    direction: row.get(2).unwrap(),
+                    action: row.get(3).unwrap(),
+                    source: row.get(5).unwrap(),
+                    dest: row.get(6).unwrap(),
+                    sport: row.get(7).unwrap(),
+                    dport: row.get(8).unwrap(),
+                    proto: row.get(4).unwrap(),
+                    icmp_type: row.get(9).unwrap(),
+                    size: row.get(10).unwrap(),
+                })
+            })
+            .unwrap();
+
+        let mut packets = Vec::new();
+        for row in query_result {
+            packets.push(row.unwrap());
+        }
+        packets
+    }
+
+    #[test]
+    fn test_logger_correctly_stores_entries_to_db() {
+        let mut logger = Logger {
+            db: Connection::open("./test_1.sqlite").unwrap(),
+            batch: Vec::new(),
+            batch_size: 1,
+        };
+
+        drop_table(&logger);
+        logger.create_table();
+
+        let tcp_entry = LogEntry::new(
+            &Fields::new(&TCP_PACKET),
+            FirewallDirection::IN,
+            FirewallAction::DENY,
+        );
+        let icmpv6_entry = LogEntry::new(
+            &Fields::new(&ICMPV6_PACKET),
+            FirewallDirection::OUT,
+            FirewallAction::ACCEPT,
+        );
+        let arp_entry = LogEntry::new(
+            &Fields::new(&ARP_PACKET),
+            FirewallDirection::OUT,
+            FirewallAction::REJECT,
+        );
+
+        logger.add_entry(tcp_entry.clone());
+        logger.add_entry(icmpv6_entry.clone());
+        logger.add_entry(arp_entry.clone());
+
+        let packets = retrieve_all_packets(&logger);
+        assert_eq!(packets.len(), 3);
+        assert_eq!(*packets.get(0).unwrap(), tcp_entry);
+        assert_eq!(*packets.get(1).unwrap(), icmpv6_entry);
+        assert_eq!(*packets.get(2).unwrap(), arp_entry);
+    }
+
+    #[test]
+    fn test_logger_correctly_stores_batches_to_db() {
+        let mut logger = Logger {
+            db: Connection::open("./test_2.sqlite").unwrap(),
+            batch: Vec::new(),
+            batch_size: 5,
+        };
+
+        drop_table(&logger);
+        logger.create_table();
+
+        let tcp_entry = LogEntry::new(
+            &Fields::new(&TCP_PACKET),
+            FirewallDirection::IN,
+            FirewallAction::DENY,
+        );
+        let icmpv6_entry = LogEntry::new(
+            &Fields::new(&ICMPV6_PACKET),
+            FirewallDirection::OUT,
+            FirewallAction::ACCEPT,
+        );
+        let arp_entry = LogEntry::new(
+            &Fields::new(&ARP_PACKET),
+            FirewallDirection::OUT,
+            FirewallAction::REJECT,
+        );
+
+        logger.add_entry(tcp_entry.clone());
+        logger.add_entry(tcp_entry.clone());
+        logger.add_entry(icmpv6_entry.clone());
+        logger.add_entry(arp_entry.clone());
+
+        let mut packets = retrieve_all_packets(&logger);
+
+        // 4 packets have been added but batch size is 5 => table is still empty!
+        assert!(packets.is_empty());
+
+        // add a fifth packet
+        logger.add_entry(icmpv6_entry.clone());
+        packets = retrieve_all_packets(&logger);
+
+        // now the table contains 5 packets
+        assert_eq!(packets.len(), 5);
+        assert_eq!(*packets.get(0).unwrap(), tcp_entry);
+        assert_eq!(*packets.get(1).unwrap(), tcp_entry);
+        assert_eq!(*packets.get(2).unwrap(), icmpv6_entry);
+        assert_eq!(*packets.get(3).unwrap(), arp_entry);
+        assert_eq!(*packets.get(4).unwrap(), icmpv6_entry);
+
+        // add 4 more packets
+        logger.add_entry(icmpv6_entry.clone());
+        logger.add_entry(arp_entry.clone());
+        logger.add_entry(arp_entry.clone());
+        logger.add_entry(tcp_entry.clone());
+        packets = retrieve_all_packets(&logger);
+
+        // the table still contains 5 packets
+        assert_eq!(packets.len(), 5);
+
+        // add a tenth packet
+        logger.add_entry(icmpv6_entry.clone());
+        packets = retrieve_all_packets(&logger);
+
+        // the table now contains 10 packets
+        assert_eq!(packets.len(), 10);
+        assert_eq!(*packets.get(0).unwrap(), tcp_entry);
+        assert_eq!(*packets.get(1).unwrap(), tcp_entry);
+        assert_eq!(*packets.get(2).unwrap(), icmpv6_entry);
+        assert_eq!(*packets.get(3).unwrap(), arp_entry);
+        assert_eq!(*packets.get(4).unwrap(), icmpv6_entry);
+        assert_eq!(*packets.get(5).unwrap(), icmpv6_entry);
+        assert_eq!(*packets.get(6).unwrap(), arp_entry);
+        assert_eq!(*packets.get(7).unwrap(), arp_entry);
+        assert_eq!(*packets.get(8).unwrap(), tcp_entry);
+        assert_eq!(*packets.get(9).unwrap(), icmpv6_entry);
     }
 }

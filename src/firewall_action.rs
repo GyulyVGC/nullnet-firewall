@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-use rusqlite::types::ToSqlOutput;
+use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 
 use crate::FirewallError;
@@ -44,6 +44,12 @@ impl Display for FirewallAction {
 impl ToSql for FirewallAction {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(self.to_string().into())
+    }
+}
+
+impl FromSql for FirewallAction {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        FromSqlResult::Ok(FirewallAction::from_str(value.as_str().unwrap()).unwrap())
     }
 }
 

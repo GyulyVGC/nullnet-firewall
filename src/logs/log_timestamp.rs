@@ -1,10 +1,11 @@
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 use chrono::{DateTime, Local};
-use rusqlite::types::ToSqlOutput;
+use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub(crate) struct LogTimestamp {
     timestamp: DateTime<Local>,
 }
@@ -20,6 +21,14 @@ impl LogTimestamp {
 impl ToSql for LogTimestamp {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(self.to_string().into())
+    }
+}
+
+impl FromSql for LogTimestamp {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        FromSqlResult::Ok(LogTimestamp {
+            timestamp: DateTime::from_str(value.as_str().unwrap()).unwrap(),
+        })
     }
 }
 

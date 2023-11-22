@@ -5,6 +5,7 @@ use crate::logs::log_timestamp::LogTimestamp;
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
 
+#[derive(Debug, PartialEq, Clone)]
 pub(crate) struct LogEntry {
     pub(crate) timestamp: LogTimestamp,
     pub(crate) direction: FirewallDirection,

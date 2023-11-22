@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-use rusqlite::types::ToSqlOutput;
+use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 
 use crate::FirewallError;
@@ -9,7 +9,7 @@ use crate::FirewallError;
 /// Direction of a firewall rule.
 ///
 /// Each firewall rule is associated to a given direction.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FirewallDirection {
     /// Refers to incoming network traffic.
     IN,
@@ -38,6 +38,12 @@ impl Display for FirewallDirection {
 impl ToSql for FirewallDirection {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(self.to_string().into())
+    }
+}
+
+impl FromSql for FirewallDirection {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        FromSqlResult::Ok(FirewallDirection::from_str(value.as_str().unwrap()).unwrap())
     }
 }
 

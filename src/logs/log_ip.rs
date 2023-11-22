@@ -1,10 +1,11 @@
 use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
+use std::str::FromStr;
 
-use rusqlite::types::ToSqlOutput;
+use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub(crate) struct LogIp {
     ip: IpAddr,
 }
@@ -18,6 +19,14 @@ impl LogIp {
 impl ToSql for LogIp {
     fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
         Ok(self.to_string().into())
+    }
+}
+
+impl FromSql for LogIp {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        FromSqlResult::Ok(LogIp {
+            ip: IpAddr::from_str(value.as_str().unwrap()).unwrap(),
+        })
     }
 }
 

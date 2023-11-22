@@ -14,4 +14,4 @@ Cargo.lock
 *.iml
 
 .DS_Store
-**/*log.sqlite
+**/*.sqlite
