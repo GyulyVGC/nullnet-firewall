@@ -3,6 +3,7 @@ use rusqlite::types::ToSqlOutput;
 use rusqlite::ToSql;
 use std::fmt::{Display, Formatter};
 
+#[derive(PartialEq, Debug)]
 pub(crate) struct LogTimestamp {
     timestamp: DateTime<Local>,
 }
@@ -24,5 +25,31 @@ impl ToSql for LogTimestamp {
 impl Display for LogTimestamp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.timestamp)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::logs::log_timestamp::LogTimestamp;
+    use rusqlite::types::ToSqlOutput;
+    use rusqlite::types::Value::Text;
+    use rusqlite::ToSql;
+
+    #[test]
+    fn test_log_timestamp_from_date_time() {
+        let time = chrono::offset::Local::now();
+        assert_eq!(
+            LogTimestamp::from_date_time(time),
+            LogTimestamp { timestamp: time }
+        );
+    }
+
+    #[test]
+    fn test_log_timestamp_to_sql() {
+        let time = chrono::offset::Local::now();
+        assert_eq!(
+            LogTimestamp::to_sql(&LogTimestamp { timestamp: time }),
+            Ok(ToSqlOutput::Owned(Text(time.to_string())))
+        );
     }
 }
