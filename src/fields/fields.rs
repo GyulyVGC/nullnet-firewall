@@ -4,7 +4,7 @@ use etherparse::PacketHeaders;
 
 use crate::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
 
-#[derive(Default)]
+#[derive(Default, PartialEq, Debug)]
 pub(crate) struct Fields {
     pub(crate) source: Option<IpAddr>,
     pub(crate) dest: Option<IpAddr>,
@@ -35,5 +35,55 @@ impl Fields {
                 ..Fields::default()
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
+    use crate::Fields;
+    use std::net::IpAddr;
+    use std::str::FromStr;
+
+    #[test]
+    fn test_fields_new() {
+        assert_eq!(
+            Fields::new(&TCP_PACKET),
+            Fields {
+                source: Some(IpAddr::from_str("192.168.200.135").unwrap()),
+                dest: Some(IpAddr::from_str("192.168.200.21").unwrap()),
+                sport: Some(6711),
+                dport: Some(2000),
+                proto: Some(6),
+                icmp_type: None,
+                size: 66
+            }
+        );
+
+        assert_eq!(
+            Fields::new(&ICMPV6_PACKET),
+            Fields {
+                source: Some(IpAddr::from_str("3ffe:501:4819::42").unwrap()),
+                dest: Some(IpAddr::from_str("3ffe:507:0:1:200:86ff:fe05:8da").unwrap()),
+                sport: None,
+                dport: None,
+                proto: Some(58),
+                icmp_type: Some(135),
+                size: 86
+            }
+        );
+
+        assert_eq!(
+            Fields::new(&ARP_PACKET),
+            Fields {
+                source: None,
+                dest: None,
+                sport: None,
+                dport: None,
+                proto: None,
+                icmp_type: None,
+                size: 42
+            }
+        );
     }
 }

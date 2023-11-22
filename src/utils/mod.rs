@@ -1,4 +1,3 @@
-pub(crate) mod icmp_type;
 pub(crate) mod ip_collection;
 pub(crate) mod port_collection;
 pub(crate) mod proto;
