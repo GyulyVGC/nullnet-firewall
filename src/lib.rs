@@ -10,8 +10,11 @@
 //!
 //! The library assumes that users are able to manipulate the stream of network packets in a way such
 //! it's possible to take proper actions to allow or deny the forwarding of single packets
-//! between the operating system and the network card; consequently, this framework is mainly intended
+//! between the network card and the operating system; consequently, this framework is mainly intended
 //! to be used at the level of *network drivers*.
+//!
+//! Each of the packets passed to the firewall will be logged both in standard output
+//! and in a `SQLite` database with path `./log.sqlite`.
 //!
 //! # Firewall definition
 //!
@@ -20,8 +23,11 @@
 //!
 //! Each of the **rules** defined in the file is placed on a new line and has the following structure:
 //! ``` txt
-//! DIRECTION ACTION [OPTIONS]
+//! [+] DIRECTION ACTION [OPTIONS]
 //! ```
+//!
+//! * Each rule can optionally be introduced by a `+` character; this will make the rule
+//! have higher priority (quick rule).
 //!
 //! * `DIRECTION` can be either `IN` or `OUT` and represents the traffic directionality
 //! (see [`FirewallDirection`]).
@@ -45,13 +51,14 @@
 //!
 //! A **sample** firewall configuration file is reported in the following:
 //!
-//! ``` txt
-//! OUT REJECT --source 8.8.8.8 --sport 6700:6800,8080
-//! OUT DENY --source 192.168.200.0-192.168.200.255 --sport 6700:6800,8080 --dport 1,2,2000
-//! IN ACCEPT --source 2.1.1.2,2.1.1.3 --dest 2.1.1.1 --proto 1
-//! IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8
-//! OUT REJECT
-//! IN ACCEPT
+//! ``` text
+//! # Firewall rules (this is a comment line)
+//!
+//! IN REJECT --source 8.8.8.8
+//! # Rules marked with '+' have higher priority
+//! + IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
+//! OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
+//! OUT DENY
 //! ```
 //!
 //! In case of invalid firewall configurations, a [`FirewallError`] will be returned.
@@ -85,9 +92,10 @@
 //! ```
 //!
 //! An existing firewall can be temporarily [disabled](Firewall::disable),
-//! and the default [input policy](Firewall::set_policy_in) and
-//! [output policy](Firewall::set_policy_out) can
-//! be overridden for packets that doesn't match any of the firewall rules.
+//! its rules can be [updated](Firewall::update_rules),
+//! and the default [input policy](Firewall::policy_in) and
+//! [output policy](Firewall::policy_out) can
+//! be overridden for packets that don't match any of the firewall rules.
 
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -117,7 +125,7 @@ mod utils;
 /// Object embedding a collection of firewall rules and policies to determine
 /// the action to be taken for a given network packet.
 ///
-/// A new `Firewall` can be created from a textual file listing a set of rule.
+/// A new `Firewall` can be created from a textual file listing a set of rules.
 pub struct Firewall {
     rules: Vec<FirewallRule>,
     enabled: bool,
@@ -254,6 +262,32 @@ impl Firewall {
         action
     }
 
+    /// Updates the rules of a previously instantiated [`Firewall`].
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - The path of a file defining the firewall rules.
+    ///
+    /// # Errors
+    ///
+    /// Will return a [`FirewallError`] if the rules defined in the file are not properly formatted.
+    ///
+    /// # Panics
+    ///
+    /// Will panic if the supplied `file_path` does not exist or the user does not have
+    /// permission to read it.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::Firewall;
+    ///
+    /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
+    ///
+    /// /* ... */
+    ///
+    /// firewall.update_rules("./samples/firewall_for_tests_1.txt");
+    /// ```
     pub fn update_rules(&mut self, file_path: &str) -> Result<(), FirewallError> {
         let mut rules = Vec::new();
         let file = File::open(file_path).unwrap();

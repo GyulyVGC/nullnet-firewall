@@ -89,11 +89,12 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
 
 #[cfg(test)]
 mod tests {
+    use rusqlite::Connection;
+    use serial_test::serial;
+
     use crate::logs::logger::{Logger, SQLITE_PATH};
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
     use crate::{Fields, FirewallAction, FirewallDirection, LogEntry};
-    use rusqlite::Connection;
-    use serial_test::serial;
 
     fn drop_table(logger: &Logger) {
         logger

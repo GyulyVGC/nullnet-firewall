@@ -1,4 +1,7 @@
+# Firewall rules (this is a comment line)
+
 IN REJECT --source 8.8.8.8
-IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
+# Rules marked with '+' have higher priority
++ IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
 OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
 OUT DENY

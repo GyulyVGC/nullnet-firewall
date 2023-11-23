@@ -85,11 +85,12 @@ fn format_icmp_type(icmp_type: Option<u8>) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::net::IpAddr;
+    use std::str::FromStr;
+
     use crate::logs::log_ip::LogIp;
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
     use crate::{Fields, FirewallAction, FirewallDirection, LogEntry};
-    use std::net::IpAddr;
-    use std::str::FromStr;
 
     #[test]
     fn test_log_entry_new() {
