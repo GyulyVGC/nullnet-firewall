@@ -17,8 +17,11 @@ about *how* to handle the packet.
 
 The library assumes that users are able to manipulate the stream of network packets in a way such
 it's possible to take proper actions to allow or deny the forwarding of single packets
-between the operating system and the network card; consequently, this framework is mainly intended
+between the network card and the operating system; consequently, this framework is mainly intended
 to be used at the level of *network drivers*.
+
+Each of the packets passed to the firewall will be logged both in standard output
+and in a `SQLite` database with path `./log.sqlite`.
 
 ## Firewall rules definition
 
@@ -26,8 +29,11 @@ A new `Firewall` object is defined as a set of rules specified in a textual file
 
 Each of the **rules** defined in the file is placed on a new line and has the following structure:
 ``` txt
-DIRECTION ACTION [OPTIONS]
+[+] DIRECTION ACTION [OPTIONS]
 ```
+
+* Each rule can optionally be introduced by a `+` character; this will make the rule
+  have higher priority (quick rule).
 
 * `DIRECTION` can be either `IN` or `OUT` and represents the traffic directionality.
 
@@ -50,13 +56,14 @@ associated with the rule.
 
 A **sample** firewall configuration file is reported in the following:
 
-``` txt
-OUT REJECT --source 8.8.8.8 --sport 6700:6800,8080
-OUT DENY --source 192.168.200.0-192.168.200.255 --sport 6700:6800,8080 --dport 1,2,2000
-IN ACCEPT --source 2.1.1.2,2.1.1.3 --dest 2.1.1.1 --proto 1
-IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8
-OUT REJECT
-IN ACCEPT
+``` text
+# Firewall rules (this is a comment line)
+
+IN REJECT --source 8.8.8.8
+# Rules marked with '+' have higher priority
++ IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
+OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
+OUT DENY
 ```
 
 In case of invalid firewall configurations, a specific `FirewallError` will be raised.
@@ -69,7 +76,7 @@ of the netwrok packets in transit.
 This is done by invoking `Firewall::resolve_packet`, which will answer with the
 action to take for the supplied packet.
 
-``` rs
+``` rust
 use nullnet_firewall::{Firewall, FirewallDirection, FirewallAction};
 
 // build the firewall from the rules in a file
@@ -79,7 +86,7 @@ let firewall = Firewall::new("./samples/firewall.txt").unwrap();
 let packet = [/* ... */];
 
 // determine action for packet, supposing incoming direction for packet
-let action = firewall.resolve_packet(&packet, &FirewallDirection::IN);
+let action = firewall.resolve_packet(&packet, FirewallDirection::IN);
 
 // act accordingly
 match action {

@@ -1,4 +1,8 @@
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
+use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::ToSql;
 
 use crate::FirewallError;
 
@@ -31,10 +35,33 @@ impl FromStr for FirewallAction {
     }
 }
 
+impl Display for FirewallAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+impl ToSql for FirewallAction {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(self.to_string().into())
+    }
+}
+
+impl FromSql for FirewallAction {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        FromSqlResult::Ok(FirewallAction::from_str(value.as_str().unwrap()).unwrap())
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{FirewallAction, FirewallError};
     use std::str::FromStr;
+
+    use rusqlite::types::ToSqlOutput;
+    use rusqlite::types::Value::Text;
+    use rusqlite::ToSql;
+
+    use crate::{FirewallAction, FirewallError};
 
     #[test]
     fn test_firewall_actions_from_str() {
@@ -51,5 +78,23 @@ mod tests {
         let err = FirewallAction::from_str("DROP").unwrap_err();
         assert_eq!(err, FirewallError::InvalidAction("DROP".to_owned()));
         assert_eq!(err.to_string(), "Firewall error - incorrect action 'DROP'");
+    }
+
+    #[test]
+    fn test_firewall_actions_to_sql() {
+        assert_eq!(
+            FirewallAction::to_sql(&FirewallAction::ACCEPT),
+            Ok(ToSqlOutput::Owned(Text("ACCEPT".to_string())))
+        );
+
+        assert_eq!(
+            FirewallAction::to_sql(&FirewallAction::DENY),
+            Ok(ToSqlOutput::Owned(Text("DENY".to_string())))
+        );
+
+        assert_eq!(
+            FirewallAction::to_sql(&FirewallAction::REJECT),
+            Ok(ToSqlOutput::Owned(Text("REJECT".to_string())))
+        );
     }
 }

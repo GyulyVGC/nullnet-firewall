@@ -1,10 +1,17 @@
+# this is a comment line
+#also this one
+              ## and this one as well!
 OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080
-OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080 --dport 1,2,2000
-OUT DENY --source 192.168.200.135-192.168.200.140 --sport 6700:6800,8080 --dport 1,2,2000
+   OUT REJECT --source 192.168.200.135 --sport 6700:6800,8080 --dport 1,2,2000
++ OUT DENY --source 192.168.200.135-192.168.200.140 --sport 6700:6800,8080 --dport 1,2,2000
 OUT REJECT --source 192.168.200.135 --sport 6750:6800,8080 --dest 192.168.200.21 --dport 1,2,2000
-IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1
-IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8
+
+
+IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8
+# i am a comment
+ + IN REJECT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 8
 IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 9
 IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 58 --icmp-type 8
 OUT REJECT
 IN ACCEPT
+# IN REJECT

@@ -1,10 +1,8 @@
 use std::str::FromStr;
 
-use etherparse::PacketHeaders;
-
 use crate::utils::ip_collection::IpCollection;
 use crate::utils::port_collection::PortCollection;
-use crate::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport, FirewallError};
+use crate::{Fields, FirewallError};
 
 /// Options associated to a specific firewall rule
 #[derive(Debug, Eq, PartialEq)]
@@ -55,38 +53,26 @@ impl FirewallOption {
         })
     }
 
-    pub(crate) fn matches_packet(&self, packet: &[u8]) -> bool {
-        if let Ok(headers) = PacketHeaders::from_ethernet_slice(packet) {
-            let ip_header = headers.ip;
-            let transport_header = headers.transport;
-            match self {
-                FirewallOption::Dest(ip_collection) => ip_collection.contains(get_dest(ip_header)),
-                FirewallOption::Dport(port_collection) => {
-                    port_collection.contains(get_dport(transport_header))
-                }
-                FirewallOption::IcmpType(icmp_type) => {
-                    if let Some(observed_icmp) = get_icmp_type(transport_header) {
-                        icmp_type.eq(&observed_icmp)
-                    } else {
-                        false
-                    }
-                }
-                FirewallOption::Proto(proto) => {
-                    if let Some(observed_proto) = get_proto(ip_header) {
-                        proto.eq(&observed_proto)
-                    } else {
-                        false
-                    }
-                }
-                FirewallOption::Source(ip_collection) => {
-                    ip_collection.contains(get_source(ip_header))
-                }
-                FirewallOption::Sport(port_collection) => {
-                    port_collection.contains(get_sport(transport_header))
+    pub(crate) fn matches_packet(&self, fields: &Fields) -> bool {
+        match self {
+            FirewallOption::Dest(ip_collection) => ip_collection.contains(fields.dest),
+            FirewallOption::Dport(port_collection) => port_collection.contains(fields.dport),
+            FirewallOption::IcmpType(icmp_type) => {
+                if let Some(observed_icmp) = fields.icmp_type {
+                    icmp_type.eq(&observed_icmp)
+                } else {
+                    false
                 }
             }
-        } else {
-            false
+            FirewallOption::Proto(proto) => {
+                if let Some(observed_proto) = fields.proto {
+                    proto.eq(&observed_proto)
+                } else {
+                    false
+                }
+            }
+            FirewallOption::Source(ip_collection) => ip_collection.contains(fields.source),
+            FirewallOption::Sport(port_collection) => port_collection.contains(fields.sport),
         }
     }
 
@@ -110,7 +96,7 @@ mod tests {
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
-    use crate::FirewallError;
+    use crate::{Fields, FirewallError};
 
     #[test]
     fn test_new_dest_option() {
@@ -285,19 +271,22 @@ mod tests {
             FirewallOption::new("--dest", "192.168.200.0-192.168.200.20,8.8.8.8").unwrap();
 
         // tcp packet
-        assert!(dest_opt.matches_packet(&TCP_PACKET));
-        assert!(range_dest_opt.matches_packet(&TCP_PACKET));
-        assert!(!range_dest_opt_miss.matches_packet(&TCP_PACKET));
+        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        assert!(dest_opt.matches_packet(&tcp_packet_fields));
+        assert!(range_dest_opt.matches_packet(&tcp_packet_fields));
+        assert!(!range_dest_opt_miss.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        assert!(!dest_opt.matches_packet(&ICMP_PACKET));
-        assert!(!range_dest_opt.matches_packet(&ICMP_PACKET));
-        assert!(!range_dest_opt_miss.matches_packet(&ICMP_PACKET));
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        assert!(!dest_opt.matches_packet(&icmp_packet_fields));
+        assert!(!range_dest_opt.matches_packet(&icmp_packet_fields));
+        assert!(!range_dest_opt_miss.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        assert!(!dest_opt.matches_packet(&ARP_PACKET));
-        assert!(!range_dest_opt.matches_packet(&ARP_PACKET));
-        assert!(!range_dest_opt_miss.matches_packet(&ARP_PACKET));
+        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        assert!(!dest_opt.matches_packet(&arp_packet_fields));
+        assert!(!range_dest_opt.matches_packet(&arp_packet_fields));
+        assert!(!range_dest_opt_miss.matches_packet(&arp_packet_fields));
     }
 
     #[test]
@@ -306,16 +295,19 @@ mod tests {
         let range_dport_opt = FirewallOption::new("--dport", "6700:6750").unwrap();
 
         // tcp packet
-        assert!(dport_opt.matches_packet(&TCP_PACKET));
-        assert!(!range_dport_opt.matches_packet(&TCP_PACKET));
+        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        assert!(dport_opt.matches_packet(&tcp_packet_fields));
+        assert!(!range_dport_opt.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        assert!(!dport_opt.matches_packet(&ICMP_PACKET));
-        assert!(!range_dport_opt.matches_packet(&ICMP_PACKET));
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        assert!(!dport_opt.matches_packet(&icmp_packet_fields));
+        assert!(!range_dport_opt.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        assert!(!dport_opt.matches_packet(&ARP_PACKET));
-        assert!(!range_dport_opt.matches_packet(&ARP_PACKET));
+        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        assert!(!dport_opt.matches_packet(&arp_packet_fields));
+        assert!(!range_dport_opt.matches_packet(&arp_packet_fields));
     }
 
     #[test]
@@ -324,16 +316,19 @@ mod tests {
         let wrong_icmp_type_opt = FirewallOption::new("--icmp-type", "7").unwrap();
 
         // tcp packet
-        assert!(!icmp_type_opt.matches_packet(&TCP_PACKET));
-        assert!(!wrong_icmp_type_opt.matches_packet(&TCP_PACKET));
+        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        assert!(!icmp_type_opt.matches_packet(&tcp_packet_fields));
+        assert!(!wrong_icmp_type_opt.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        assert!(icmp_type_opt.matches_packet(&ICMP_PACKET));
-        assert!(!wrong_icmp_type_opt.matches_packet(&ICMP_PACKET));
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        assert!(icmp_type_opt.matches_packet(&icmp_packet_fields));
+        assert!(!wrong_icmp_type_opt.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        assert!(!icmp_type_opt.matches_packet(&ARP_PACKET));
-        assert!(!wrong_icmp_type_opt.matches_packet(&ARP_PACKET));
+        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        assert!(!icmp_type_opt.matches_packet(&arp_packet_fields));
+        assert!(!wrong_icmp_type_opt.matches_packet(&arp_packet_fields));
     }
 
     #[test]
@@ -342,16 +337,19 @@ mod tests {
         let icmp_proto_opt = FirewallOption::new("--proto", "1").unwrap();
 
         // tcp packet
-        assert!(tcp_proto_opt.matches_packet(&TCP_PACKET));
-        assert!(!icmp_proto_opt.matches_packet(&TCP_PACKET));
+        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        assert!(tcp_proto_opt.matches_packet(&tcp_packet_fields));
+        assert!(!icmp_proto_opt.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        assert!(!tcp_proto_opt.matches_packet(&ICMP_PACKET));
-        assert!(icmp_proto_opt.matches_packet(&ICMP_PACKET));
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        assert!(!tcp_proto_opt.matches_packet(&icmp_packet_fields));
+        assert!(icmp_proto_opt.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        assert!(!tcp_proto_opt.matches_packet(&ARP_PACKET));
-        assert!(!icmp_proto_opt.matches_packet(&ARP_PACKET));
+        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        assert!(!tcp_proto_opt.matches_packet(&arp_packet_fields));
+        assert!(!icmp_proto_opt.matches_packet(&arp_packet_fields));
     }
 
     #[test]
@@ -360,13 +358,16 @@ mod tests {
             FirewallOption::new("--source", "192.168.200.0-192.168.200.255,2.1.1.2").unwrap();
 
         // tcp packet
-        assert!(source_opt.matches_packet(&TCP_PACKET));
+        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        assert!(source_opt.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        assert!(source_opt.matches_packet(&ICMP_PACKET));
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        assert!(source_opt.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        assert!(!source_opt.matches_packet(&ARP_PACKET));
+        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        assert!(!source_opt.matches_packet(&arp_packet_fields));
     }
 
     #[test]
@@ -377,22 +378,25 @@ mod tests {
         let range_sport_opt_miss = FirewallOption::new("--sport", "6712:6750").unwrap();
 
         // tcp packet
-        assert!(!sport_opt_wrong.matches_packet(&TCP_PACKET));
-        assert!(!sport_opt_miss.matches_packet(&TCP_PACKET));
-        assert!(range_sport_opt.matches_packet(&TCP_PACKET));
-        assert!(!range_sport_opt_miss.matches_packet(&TCP_PACKET));
+        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        assert!(!sport_opt_wrong.matches_packet(&tcp_packet_fields));
+        assert!(!sport_opt_miss.matches_packet(&tcp_packet_fields));
+        assert!(range_sport_opt.matches_packet(&tcp_packet_fields));
+        assert!(!range_sport_opt_miss.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        assert!(!sport_opt_wrong.matches_packet(&ICMP_PACKET));
-        assert!(!sport_opt_miss.matches_packet(&ICMP_PACKET));
-        assert!(!range_sport_opt.matches_packet(&ICMP_PACKET));
-        assert!(!range_sport_opt_miss.matches_packet(&ICMP_PACKET));
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        assert!(!sport_opt_wrong.matches_packet(&icmp_packet_fields));
+        assert!(!sport_opt_miss.matches_packet(&icmp_packet_fields));
+        assert!(!range_sport_opt.matches_packet(&icmp_packet_fields));
+        assert!(!range_sport_opt_miss.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        assert!(!sport_opt_wrong.matches_packet(&ARP_PACKET));
-        assert!(!sport_opt_miss.matches_packet(&ARP_PACKET));
-        assert!(!range_sport_opt.matches_packet(&ARP_PACKET));
-        assert!(!range_sport_opt_miss.matches_packet(&ARP_PACKET));
+        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        assert!(!sport_opt_wrong.matches_packet(&arp_packet_fields));
+        assert!(!sport_opt_miss.matches_packet(&arp_packet_fields));
+        assert!(!range_sport_opt.matches_packet(&arp_packet_fields));
+        assert!(!range_sport_opt_miss.matches_packet(&arp_packet_fields));
     }
 
     #[test]
@@ -411,10 +415,11 @@ mod tests {
         .unwrap();
 
         // ipv6 packet
-        assert!(dest_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(!dest_ko.matches_packet(&UDP_IPV6_PACKET));
-        assert!(range_dest_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(!range_dest_ko.matches_packet(&UDP_IPV6_PACKET));
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        assert!(dest_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(!dest_ko.matches_packet(&udp_ipv6_packet_fields));
+        assert!(range_dest_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(!range_dest_ko.matches_packet(&udp_ipv6_packet_fields));
     }
 
     #[test]
@@ -425,10 +430,11 @@ mod tests {
         let range_dport_ko = FirewallOption::new("--dport", "53:63").unwrap();
 
         // ipv6 packet
-        assert!(dport_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(!dport_ko.matches_packet(&UDP_IPV6_PACKET));
-        assert!(range_dport_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(!range_dport_ko.matches_packet(&UDP_IPV6_PACKET));
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        assert!(dport_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(!dport_ko.matches_packet(&udp_ipv6_packet_fields));
+        assert!(range_dport_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(!range_dport_ko.matches_packet(&udp_ipv6_packet_fields));
     }
 
     #[test]
@@ -436,7 +442,8 @@ mod tests {
         let icmp_type = FirewallOption::new("--icmp-type", "8").unwrap();
 
         // ipv6 packet
-        assert!(!icmp_type.matches_packet(&UDP_IPV6_PACKET));
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        assert!(!icmp_type.matches_packet(&udp_ipv6_packet_fields));
     }
 
     #[test]
@@ -445,8 +452,9 @@ mod tests {
         let proto_ko = FirewallOption::new("--proto", "18").unwrap();
 
         // ipv6 packet
-        assert!(proto_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(!proto_ko.matches_packet(&UDP_IPV6_PACKET));
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        assert!(proto_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(!proto_ko.matches_packet(&udp_ipv6_packet_fields));
     }
 
     #[test]
@@ -464,11 +472,12 @@ mod tests {
             FirewallOption::new("--source", "3ffe:501:4819::31-3ffe:501:4819::41").unwrap();
 
         // ipv6 packet
-        assert!(!source_ko.matches_packet(&UDP_IPV6_PACKET));
-        assert!(source_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(range_source_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(range_source_ok_2.matches_packet(&UDP_IPV6_PACKET));
-        assert!(!range_source_ko.matches_packet(&UDP_IPV6_PACKET));
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        assert!(!source_ko.matches_packet(&udp_ipv6_packet_fields));
+        assert!(source_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(range_source_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(range_source_ok_2.matches_packet(&udp_ipv6_packet_fields));
+        assert!(!range_source_ko.matches_packet(&udp_ipv6_packet_fields));
     }
 
     #[test]
@@ -479,10 +488,11 @@ mod tests {
         let range_sport_ko = FirewallOption::new("--sport", "2000:2500").unwrap();
 
         // ipv6 packet
-        assert!(sport_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(!sport_ko.matches_packet(&UDP_IPV6_PACKET));
-        assert!(range_sport_ok.matches_packet(&UDP_IPV6_PACKET));
-        assert!(!range_sport_ko.matches_packet(&UDP_IPV6_PACKET));
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        assert!(sport_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(!sport_ko.matches_packet(&udp_ipv6_packet_fields));
+        assert!(range_sport_ok.matches_packet(&udp_ipv6_packet_fields));
+        assert!(!range_sport_ko.matches_packet(&udp_ipv6_packet_fields));
     }
 
     #[test]
@@ -496,20 +506,22 @@ mod tests {
 
         // invalid packet #1
         let packet_1 = [];
-        assert!(!sport.matches_packet(&packet_1));
-        assert!(!source.matches_packet(&packet_1));
-        assert!(!dest.matches_packet(&packet_1));
-        assert!(!dport.matches_packet(&packet_1));
-        assert!(!proto.matches_packet(&packet_1));
-        assert!(!icmp_type.matches_packet(&packet_1));
+        let fields_1 = Fields::new(&packet_1);
+        assert!(!sport.matches_packet(&fields_1));
+        assert!(!source.matches_packet(&fields_1));
+        assert!(!dest.matches_packet(&fields_1));
+        assert!(!dport.matches_packet(&fields_1));
+        assert!(!proto.matches_packet(&fields_1));
+        assert!(!icmp_type.matches_packet(&fields_1));
 
         // invalid packet #2
         let packet_2 = [b'n', b'o', b't', b'v', b'a', b'l', b'i', b'd'];
-        assert!(!sport.matches_packet(&packet_2));
-        assert!(!source.matches_packet(&packet_2));
-        assert!(!dest.matches_packet(&packet_2));
-        assert!(!dport.matches_packet(&packet_2));
-        assert!(!proto.matches_packet(&packet_2));
-        assert!(!icmp_type.matches_packet(&packet_2));
+        let fields_2 = Fields::new(&packet_2);
+        assert!(!sport.matches_packet(&fields_2));
+        assert!(!source.matches_packet(&fields_2));
+        assert!(!dest.matches_packet(&fields_2));
+        assert!(!dport.matches_packet(&fields_2));
+        assert!(!proto.matches_packet(&fields_2));
+        assert!(!icmp_type.matches_packet(&fields_2));
     }
 }

@@ -1,11 +1,15 @@
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
+use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::ToSql;
 
 use crate::FirewallError;
 
 /// Direction of a firewall rule.
 ///
 /// Each firewall rule is associated to a given direction.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FirewallDirection {
     /// Refers to incoming network traffic.
     IN,
@@ -25,10 +29,33 @@ impl FromStr for FirewallDirection {
     }
 }
 
+impl Display for FirewallDirection {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+impl ToSql for FirewallDirection {
+    fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
+        Ok(self.to_string().into())
+    }
+}
+
+impl FromSql for FirewallDirection {
+    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+        FromSqlResult::Ok(FirewallDirection::from_str(value.as_str().unwrap()).unwrap())
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::{FirewallDirection, FirewallError};
     use std::str::FromStr;
+
+    use rusqlite::types::ToSqlOutput;
+    use rusqlite::types::Value::Text;
+    use rusqlite::ToSql;
+
+    use crate::{FirewallDirection, FirewallError};
 
     #[test]
     fn test_firewall_directions_from_str() {
@@ -43,6 +70,19 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "Firewall error - incorrect direction 'UNDER'"
+        );
+    }
+
+    #[test]
+    fn test_firewall_direction_to_sql() {
+        assert_eq!(
+            FirewallDirection::to_sql(&FirewallDirection::IN),
+            Ok(ToSqlOutput::Owned(Text("IN".to_string())))
+        );
+
+        assert_eq!(
+            FirewallDirection::to_sql(&FirewallDirection::OUT),
+            Ok(ToSqlOutput::Owned(Text("OUT".to_string())))
         );
     }
 }
