@@ -13,12 +13,17 @@ struct Logger {
 // should be in the order of thousands when used in production
 const BATCH_SIZE: usize = 25;
 
+#[cfg(not(test))]
+const SQLITE_PATH: &str = "./log.sqlite";
+#[cfg(test)]
+const SQLITE_PATH: &str = "./test.sqlite";
+
 impl Logger {
-    fn new(batch_size: usize) -> Logger {
+    fn new() -> Logger {
         Logger {
-            db: Connection::open("./log.sqlite").unwrap(),
+            db: Connection::open(SQLITE_PATH).unwrap(),
             batch: Vec::new(),
-            batch_size,
+            batch_size: BATCH_SIZE,
         }
     }
 
@@ -68,7 +73,7 @@ impl Logger {
 }
 
 pub(crate) fn log(rx: &Receiver<LogEntry>) {
-    let mut logger = Logger::new(BATCH_SIZE);
+    let mut logger = Logger::new();
     logger.create_table();
 
     loop {
@@ -84,10 +89,11 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
 
 #[cfg(test)]
 mod tests {
-    use crate::logs::logger::Logger;
+    use crate::logs::logger::{Logger, SQLITE_PATH};
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
     use crate::{Fields, FirewallAction, FirewallDirection, LogEntry};
     use rusqlite::Connection;
+    use serial_test::serial;
 
     fn drop_table(logger: &Logger) {
         logger
@@ -124,9 +130,10 @@ mod tests {
     }
 
     #[test]
+    #[serial(database_test)]
     fn test_logger_correctly_stores_entries_to_db() {
         let mut logger = Logger {
-            db: Connection::open("./test_1.sqlite").unwrap(),
+            db: Connection::open(SQLITE_PATH).unwrap(),
             batch: Vec::new(),
             batch_size: 1,
         };
@@ -162,9 +169,10 @@ mod tests {
     }
 
     #[test]
+    #[serial(database_test)]
     fn test_logger_correctly_stores_batches_to_db() {
         let mut logger = Logger {
-            db: Connection::open("./test_2.sqlite").unwrap(),
+            db: Connection::open(SQLITE_PATH).unwrap(),
             batch: Vec::new(),
             batch_size: 5,
         };
