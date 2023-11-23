@@ -5,7 +5,7 @@ All releases with the relative changes are documented in this file.
 ## [0.2.0] - 2023-11-23
 ### Added
 - Log capabilities for the firewall: packets are logged both in standard output 
-  and in a SQLite database with path `./log-sqlite` ([#1](https://github.com/GyulyVGC/nullnet-firewall/pull/1)).
+  and in a SQLite database with path `./log.sqlite` ([#1](https://github.com/GyulyVGC/nullnet-firewall/pull/1)).
 - `Firewall::update_rules` to update the rules of a previously instantiated firewall.
 - Quick rules: each of the rules can now  be preceded by a `+` character 
   that will make it have higher priority (quick rule).
