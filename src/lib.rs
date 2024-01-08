@@ -135,6 +135,7 @@ pub struct Firewall {
     policy_out: FirewallAction,
     tx: Sender<LogEntry>,
     data_link: DataLink,
+    log: bool,
 }
 
 impl Firewall {
@@ -189,6 +190,7 @@ impl Firewall {
             policy_out: FirewallAction::default(),
             tx,
             data_link: DataLink::default(),
+            log: true,
         };
 
         firewall.update_rules(file_path)?;
@@ -257,11 +259,13 @@ impl Firewall {
             FirewallDirection::OUT => self.policy_out,
         });
 
-        // send the log entry to the logger thread
-        let log_entry = LogEntry::new(&fields, direction, action);
-        self.tx
-            .send(log_entry)
-            .expect("the firewall logger routine aborted");
+        if self.log {
+            // send the log entry to the logger thread
+            let log_entry = LogEntry::new(&fields, direction, action);
+            self.tx
+                .send(log_entry)
+                .expect("the firewall logger routine aborted");
+        }
 
         action
     }
@@ -419,10 +423,32 @@ impl Firewall {
     /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
     ///
     /// // let the firewall know that submitted packets start with an IP header
-    /// firewall.set_data_link(DataLink::RawIP);
+    /// firewall.data_link(DataLink::RawIP);
     /// ```
-    pub fn set_data_link(&mut self, data_link: DataLink) {
+    pub fn data_link(&mut self, data_link: DataLink) {
         self.data_link = data_link;
+    }
+
+    /// Enables or disables logging.
+    ///
+    /// If enabled (default) packets will be printed in stdout and will be logged into a DB.
+    ///
+    /// # Arguments
+    ///
+    /// * `log` - Whether the log activity should be enabled or not.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::{Firewall};
+    ///
+    /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
+    ///
+    /// // disable logging
+    /// firewall.log(false);
+    /// ```
+    pub fn log(&mut self, log: bool) {
+        self.log = log;
     }
 }
 
@@ -645,6 +671,7 @@ mod tests {
             policy_out: Default::default(),
             tx,
             data_link: Default::default(),
+            log: true,
         };
 
         let rules_1 = vec![
