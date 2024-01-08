@@ -90,13 +90,13 @@ mod tests {
 
     use crate::logs::log_ip::LogIp;
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
-    use crate::{Fields, FirewallAction, FirewallDirection, LogEntry};
+    use crate::{DataLink, Fields, FirewallAction, FirewallDirection, LogEntry};
 
     #[test]
     fn test_log_entry_new() {
         // tcp packet
         let log_entry_tcp = LogEntry::new(
-            &Fields::new(&TCP_PACKET),
+            &Fields::new(&TCP_PACKET, DataLink::Ethernet),
             FirewallDirection::IN,
             FirewallAction::DENY,
         );
@@ -118,7 +118,7 @@ mod tests {
 
         // icmpv6 packet
         let log_entry_tcp = LogEntry::new(
-            &Fields::new(&ICMPV6_PACKET),
+            &Fields::new(&ICMPV6_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::REJECT,
         );
@@ -147,7 +147,7 @@ mod tests {
 
         // arp packet
         let log_entry_tcp = LogEntry::new(
-            &Fields::new(&ARP_PACKET),
+            &Fields::new(&ARP_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::ACCEPT,
         );
@@ -168,7 +168,7 @@ mod tests {
 
         // tcp packet
         let log_entry_tcp = LogEntry::new(
-            &Fields::new(&TCP_PACKET),
+            &Fields::new(&TCP_PACKET, DataLink::Ethernet),
             FirewallDirection::IN,
             FirewallAction::DENY,
         );
@@ -179,7 +179,7 @@ mod tests {
 
         // icmpv6 packet
         let log_entry_tcp = LogEntry::new(
-            &Fields::new(&ICMPV6_PACKET),
+            &Fields::new(&ICMPV6_PACKET, DataLink::Ethernet),
             FirewallDirection::IN,
             FirewallAction::ACCEPT,
         );
@@ -191,7 +191,7 @@ mod tests {
 
         // arp packet
         let log_entry_tcp = LogEntry::new(
-            &Fields::new(&ARP_PACKET),
+            &Fields::new(&ARP_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::REJECT,
         );

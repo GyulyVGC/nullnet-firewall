@@ -115,7 +115,7 @@ mod tests {
     use crate::utils::ip_collection::IpCollection;
     use crate::utils::port_collection::PortCollection;
     use crate::utils::raw_packets::test_packets::{ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
-    use crate::{Fields, FirewallAction, FirewallDirection, FirewallError, FirewallRule};
+    use crate::{DataLink, Fields, FirewallAction, FirewallDirection, FirewallError, FirewallRule};
 
     #[test]
     fn test_new_firewall_rules() {
@@ -320,8 +320,8 @@ mod tests {
 
     #[test]
     fn test_rules_match_packets() {
-        let tcp_packet_fields = Fields::new(&TCP_PACKET);
-        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        let tcp_packet_fields = Fields::new(&TCP_PACKET, DataLink::Ethernet);
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET, DataLink::Ethernet);
         let rule_1 = FirewallRule::new("OUT DENY").unwrap();
         assert!(rule_1.matches_packet(&tcp_packet_fields, &FirewallDirection::OUT));
         assert!(!rule_1.matches_packet(&tcp_packet_fields, &FirewallDirection::IN));
@@ -397,7 +397,7 @@ mod tests {
 
     #[test]
     fn test_rules_match_ipv6() {
-        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET, DataLink::Ethernet);
         let rule_1 = FirewallRule::new("OUT DENY").unwrap();
         assert!(rule_1.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::OUT));
         assert!(!rule_1.matches_packet(&udp_ipv6_packet_fields, &FirewallDirection::IN));

@@ -94,7 +94,7 @@ mod tests {
 
     use crate::logs::logger::{Logger, SQLITE_PATH};
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
-    use crate::{Fields, FirewallAction, FirewallDirection, LogEntry};
+    use crate::{DataLink, Fields, FirewallAction, FirewallDirection, LogEntry};
 
     fn drop_table(logger: &Logger) {
         logger
@@ -143,17 +143,17 @@ mod tests {
         logger.create_table();
 
         let tcp_entry = LogEntry::new(
-            &Fields::new(&TCP_PACKET),
+            &Fields::new(&TCP_PACKET, DataLink::Ethernet),
             FirewallDirection::IN,
             FirewallAction::DENY,
         );
         let icmpv6_entry = LogEntry::new(
-            &Fields::new(&ICMPV6_PACKET),
+            &Fields::new(&ICMPV6_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::ACCEPT,
         );
         let arp_entry = LogEntry::new(
-            &Fields::new(&ARP_PACKET),
+            &Fields::new(&ARP_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::REJECT,
         );
@@ -182,17 +182,17 @@ mod tests {
         logger.create_table();
 
         let tcp_entry = LogEntry::new(
-            &Fields::new(&TCP_PACKET),
+            &Fields::new(&TCP_PACKET, DataLink::Ethernet),
             FirewallDirection::IN,
             FirewallAction::DENY,
         );
         let icmpv6_entry = LogEntry::new(
-            &Fields::new(&ICMPV6_PACKET),
+            &Fields::new(&ICMPV6_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::ACCEPT,
         );
         let arp_entry = LogEntry::new(
-            &Fields::new(&ARP_PACKET),
+            &Fields::new(&ARP_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::REJECT,
         );

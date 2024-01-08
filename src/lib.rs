@@ -103,6 +103,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 
+pub use crate::data_link::DataLink;
 use crate::fields::fields::Fields;
 use crate::fields::ip_header::{get_dest, get_proto, get_source};
 use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
@@ -113,6 +114,7 @@ use crate::firewall_rule::FirewallRule;
 use crate::logs::log_entry::LogEntry;
 use crate::logs::logger::log;
 
+mod data_link;
 mod fields;
 mod firewall_action;
 mod firewall_direction;
@@ -132,6 +134,7 @@ pub struct Firewall {
     policy_in: FirewallAction,
     policy_out: FirewallAction,
     tx: Sender<LogEntry>,
+    data_link: DataLink,
 }
 
 impl Firewall {
@@ -185,6 +188,7 @@ impl Firewall {
             policy_in: FirewallAction::default(),
             policy_out: FirewallAction::default(),
             tx,
+            data_link: DataLink::default(),
         };
 
         firewall.update_rules(file_path)?;
@@ -234,7 +238,7 @@ impl Firewall {
         let mut action_opt = None;
 
         // structure the packet as a set of relevant fields
-        let fields = Fields::new(packet);
+        let fields = Fields::new(packet, self.data_link);
 
         // determine action for packet
         for rule in &self.rules {
@@ -396,6 +400,29 @@ impl Firewall {
     /// ```
     pub fn policy_out(&mut self, policy: FirewallAction) {
         self.policy_out = policy;
+    }
+
+    /// Sets the [`DataLink`] type for an existing [`Firewall`].
+    ///
+    /// As default, a firewall will try to parse packets considering them Ethernet frames; if different kinds of packets
+    /// want to be inspected, it's necessary to set the corresponding data link type via this method.
+    ///
+    /// # Arguments
+    ///
+    /// * `data_link` - The data link type that'll be used to parse packets.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use nullnet_firewall::{DataLink, Firewall};
+    ///
+    /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
+    ///
+    /// // let the firewall know that submitted packets start with an IP header
+    /// firewall.set_data_link(DataLink::RawIP);
+    /// ```
+    pub fn set_data_link(&mut self, data_link: DataLink) {
+        self.data_link = data_link;
     }
 }
 
@@ -617,6 +644,7 @@ mod tests {
             policy_in: Default::default(),
             policy_out: Default::default(),
             tx,
+            data_link: Default::default(),
         };
 
         let rules_1 = vec![

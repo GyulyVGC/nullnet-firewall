@@ -96,7 +96,7 @@ mod tests {
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
-    use crate::{Fields, FirewallError};
+    use crate::{DataLink, Fields, FirewallError};
 
     #[test]
     fn test_new_dest_option() {
@@ -271,19 +271,19 @@ mod tests {
             FirewallOption::new("--dest", "192.168.200.0-192.168.200.20,8.8.8.8").unwrap();
 
         // tcp packet
-        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        let tcp_packet_fields = Fields::new(&TCP_PACKET, DataLink::Ethernet);
         assert!(dest_opt.matches_packet(&tcp_packet_fields));
         assert!(range_dest_opt.matches_packet(&tcp_packet_fields));
         assert!(!range_dest_opt_miss.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET, DataLink::Ethernet);
         assert!(!dest_opt.matches_packet(&icmp_packet_fields));
         assert!(!range_dest_opt.matches_packet(&icmp_packet_fields));
         assert!(!range_dest_opt_miss.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        let arp_packet_fields = Fields::new(&ARP_PACKET, DataLink::Ethernet);
         assert!(!dest_opt.matches_packet(&arp_packet_fields));
         assert!(!range_dest_opt.matches_packet(&arp_packet_fields));
         assert!(!range_dest_opt_miss.matches_packet(&arp_packet_fields));
@@ -295,17 +295,17 @@ mod tests {
         let range_dport_opt = FirewallOption::new("--dport", "6700:6750").unwrap();
 
         // tcp packet
-        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        let tcp_packet_fields = Fields::new(&TCP_PACKET, DataLink::Ethernet);
         assert!(dport_opt.matches_packet(&tcp_packet_fields));
         assert!(!range_dport_opt.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET, DataLink::Ethernet);
         assert!(!dport_opt.matches_packet(&icmp_packet_fields));
         assert!(!range_dport_opt.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        let arp_packet_fields = Fields::new(&ARP_PACKET, DataLink::Ethernet);
         assert!(!dport_opt.matches_packet(&arp_packet_fields));
         assert!(!range_dport_opt.matches_packet(&arp_packet_fields));
     }
@@ -316,17 +316,17 @@ mod tests {
         let wrong_icmp_type_opt = FirewallOption::new("--icmp-type", "7").unwrap();
 
         // tcp packet
-        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        let tcp_packet_fields = Fields::new(&TCP_PACKET, DataLink::Ethernet);
         assert!(!icmp_type_opt.matches_packet(&tcp_packet_fields));
         assert!(!wrong_icmp_type_opt.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET, DataLink::Ethernet);
         assert!(icmp_type_opt.matches_packet(&icmp_packet_fields));
         assert!(!wrong_icmp_type_opt.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        let arp_packet_fields = Fields::new(&ARP_PACKET, DataLink::Ethernet);
         assert!(!icmp_type_opt.matches_packet(&arp_packet_fields));
         assert!(!wrong_icmp_type_opt.matches_packet(&arp_packet_fields));
     }
@@ -337,17 +337,17 @@ mod tests {
         let icmp_proto_opt = FirewallOption::new("--proto", "1").unwrap();
 
         // tcp packet
-        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        let tcp_packet_fields = Fields::new(&TCP_PACKET, DataLink::Ethernet);
         assert!(tcp_proto_opt.matches_packet(&tcp_packet_fields));
         assert!(!icmp_proto_opt.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET, DataLink::Ethernet);
         assert!(!tcp_proto_opt.matches_packet(&icmp_packet_fields));
         assert!(icmp_proto_opt.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        let arp_packet_fields = Fields::new(&ARP_PACKET, DataLink::Ethernet);
         assert!(!tcp_proto_opt.matches_packet(&arp_packet_fields));
         assert!(!icmp_proto_opt.matches_packet(&arp_packet_fields));
     }
@@ -358,15 +358,15 @@ mod tests {
             FirewallOption::new("--source", "192.168.200.0-192.168.200.255,2.1.1.2").unwrap();
 
         // tcp packet
-        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        let tcp_packet_fields = Fields::new(&TCP_PACKET, DataLink::Ethernet);
         assert!(source_opt.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET, DataLink::Ethernet);
         assert!(source_opt.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        let arp_packet_fields = Fields::new(&ARP_PACKET, DataLink::Ethernet);
         assert!(!source_opt.matches_packet(&arp_packet_fields));
     }
 
@@ -378,21 +378,21 @@ mod tests {
         let range_sport_opt_miss = FirewallOption::new("--sport", "6712:6750").unwrap();
 
         // tcp packet
-        let tcp_packet_fields = Fields::new(&TCP_PACKET);
+        let tcp_packet_fields = Fields::new(&TCP_PACKET, DataLink::Ethernet);
         assert!(!sport_opt_wrong.matches_packet(&tcp_packet_fields));
         assert!(!sport_opt_miss.matches_packet(&tcp_packet_fields));
         assert!(range_sport_opt.matches_packet(&tcp_packet_fields));
         assert!(!range_sport_opt_miss.matches_packet(&tcp_packet_fields));
 
         // icmp packet
-        let icmp_packet_fields = Fields::new(&ICMP_PACKET);
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET, DataLink::Ethernet);
         assert!(!sport_opt_wrong.matches_packet(&icmp_packet_fields));
         assert!(!sport_opt_miss.matches_packet(&icmp_packet_fields));
         assert!(!range_sport_opt.matches_packet(&icmp_packet_fields));
         assert!(!range_sport_opt_miss.matches_packet(&icmp_packet_fields));
 
         // arp packet
-        let arp_packet_fields = Fields::new(&ARP_PACKET);
+        let arp_packet_fields = Fields::new(&ARP_PACKET, DataLink::Ethernet);
         assert!(!sport_opt_wrong.matches_packet(&arp_packet_fields));
         assert!(!sport_opt_miss.matches_packet(&arp_packet_fields));
         assert!(!range_sport_opt.matches_packet(&arp_packet_fields));
@@ -415,7 +415,7 @@ mod tests {
         .unwrap();
 
         // ipv6 packet
-        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET, DataLink::Ethernet);
         assert!(dest_ok.matches_packet(&udp_ipv6_packet_fields));
         assert!(!dest_ko.matches_packet(&udp_ipv6_packet_fields));
         assert!(range_dest_ok.matches_packet(&udp_ipv6_packet_fields));
@@ -430,7 +430,7 @@ mod tests {
         let range_dport_ko = FirewallOption::new("--dport", "53:63").unwrap();
 
         // ipv6 packet
-        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET, DataLink::Ethernet);
         assert!(dport_ok.matches_packet(&udp_ipv6_packet_fields));
         assert!(!dport_ko.matches_packet(&udp_ipv6_packet_fields));
         assert!(range_dport_ok.matches_packet(&udp_ipv6_packet_fields));
@@ -442,7 +442,7 @@ mod tests {
         let icmp_type = FirewallOption::new("--icmp-type", "8").unwrap();
 
         // ipv6 packet
-        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET, DataLink::Ethernet);
         assert!(!icmp_type.matches_packet(&udp_ipv6_packet_fields));
     }
 
@@ -452,7 +452,7 @@ mod tests {
         let proto_ko = FirewallOption::new("--proto", "18").unwrap();
 
         // ipv6 packet
-        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET, DataLink::Ethernet);
         assert!(proto_ok.matches_packet(&udp_ipv6_packet_fields));
         assert!(!proto_ko.matches_packet(&udp_ipv6_packet_fields));
     }
@@ -472,7 +472,7 @@ mod tests {
             FirewallOption::new("--source", "3ffe:501:4819::31-3ffe:501:4819::41").unwrap();
 
         // ipv6 packet
-        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET, DataLink::Ethernet);
         assert!(!source_ko.matches_packet(&udp_ipv6_packet_fields));
         assert!(source_ok.matches_packet(&udp_ipv6_packet_fields));
         assert!(range_source_ok.matches_packet(&udp_ipv6_packet_fields));
@@ -488,7 +488,7 @@ mod tests {
         let range_sport_ko = FirewallOption::new("--sport", "2000:2500").unwrap();
 
         // ipv6 packet
-        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET);
+        let udp_ipv6_packet_fields = Fields::new(&UDP_IPV6_PACKET, DataLink::Ethernet);
         assert!(sport_ok.matches_packet(&udp_ipv6_packet_fields));
         assert!(!sport_ko.matches_packet(&udp_ipv6_packet_fields));
         assert!(range_sport_ok.matches_packet(&udp_ipv6_packet_fields));
@@ -506,7 +506,7 @@ mod tests {
 
         // invalid packet #1
         let packet_1 = [];
-        let fields_1 = Fields::new(&packet_1);
+        let fields_1 = Fields::new(&packet_1, DataLink::Ethernet);
         assert!(!sport.matches_packet(&fields_1));
         assert!(!source.matches_packet(&fields_1));
         assert!(!dest.matches_packet(&fields_1));
@@ -516,7 +516,7 @@ mod tests {
 
         // invalid packet #2
         let packet_2 = [b'n', b'o', b't', b'v', b'a', b'l', b'i', b'd'];
-        let fields_2 = Fields::new(&packet_2);
+        let fields_2 = Fields::new(&packet_2, DataLink::Ethernet);
         assert!(!sport.matches_packet(&fields_2));
         assert!(!source.matches_packet(&fields_2));
         assert!(!dest.matches_packet(&fields_2));
