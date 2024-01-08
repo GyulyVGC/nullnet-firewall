@@ -48,7 +48,9 @@ mod tests {
     use std::net::IpAddr;
     use std::str::FromStr;
 
-    use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMP_PACKET, ICMPV6_PACKET, TCP_PACKET, UDP_IPV6_PACKET};
+    use crate::utils::raw_packets::test_packets::{
+        ARP_PACKET, ICMPV6_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+    };
     use crate::{DataLink, Fields};
 
     #[test]
