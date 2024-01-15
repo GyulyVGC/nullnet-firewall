@@ -460,7 +460,7 @@ mod tests {
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
-    use crate::{Firewall, LogEntry};
+    use crate::{DataLink, Firewall, LogEntry};
     use crate::{FirewallAction, FirewallDirection, FirewallRule};
 
     const TEST_FILE_1: &str = "./samples/firewall_for_tests_1.txt";
@@ -506,6 +506,8 @@ mod tests {
         firewall.policy_in(FirewallAction::DENY);
         firewall.policy_out(FirewallAction::ACCEPT);
 
+        assert_eq!(firewall.data_link, DataLink::Ethernet);
+
         // tcp packet
         assert_eq!(
             firewall.resolve_packet(&TCP_PACKET, FirewallDirection::IN),
@@ -533,6 +535,36 @@ mod tests {
         );
         assert_eq!(
             firewall.resolve_packet(&ARP_PACKET, FirewallDirection::OUT),
+            FirewallAction::REJECT
+        );
+    }
+
+    #[test]
+    fn test_firewall_determine_action_for_packets_file_1_with_data_link_raw_ip() {
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        firewall.data_link(DataLink::RawIP);
+        firewall.policy_in(FirewallAction::DENY);
+        firewall.policy_out(FirewallAction::ACCEPT);
+
+        assert_eq!(firewall.data_link, DataLink::RawIP);
+
+        // tcp packet
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET[14..], FirewallDirection::IN),
+            FirewallAction::ACCEPT
+        );
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET[14..], FirewallDirection::OUT),
+            FirewallAction::DENY
+        );
+
+        // icmp packet
+        assert_eq!(
+            firewall.resolve_packet(&ICMP_PACKET[14..], FirewallDirection::IN),
+            FirewallAction::REJECT
+        );
+        assert_eq!(
+            firewall.resolve_packet(&ICMP_PACKET[14..], FirewallDirection::OUT),
             FirewallAction::REJECT
         );
     }
@@ -803,5 +835,15 @@ mod tests {
         assert!(firewall.enabled);
         assert_eq!(firewall.policy_in, FirewallAction::ACCEPT);
         assert_eq!(firewall.policy_out, FirewallAction::ACCEPT);
+    }
+
+    #[test]
+    fn test_log_disable() {
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert!(firewall.log);
+        firewall.log(false);
+        assert!(!firewall.log);
+        firewall.log(true);
+        assert!(firewall.log);
     }
 }

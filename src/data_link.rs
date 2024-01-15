@@ -1,7 +1,7 @@
 /// Data link type associated with packets processed by the firewall.
 ///
 /// If not specified, Ethernet will be used.
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Debug, PartialEq)]
 pub enum DataLink {
     /// Suitable for packets starting with an Ethernet header.
     #[default]
