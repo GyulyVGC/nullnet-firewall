@@ -2,6 +2,11 @@
 
 All releases with the relative changes are documented in this file.
 
+## [0.2.1] - 2024-01-15
+### Added
+- `Firewall::data_link` method to set the `DataLink` type of the `Firewall`: in addition to Ethernet, now also raw IP is supported.
+- `Firewall::log` method to allow users enable or disable logging (it's still enabled by default).
+
 ## [0.2.0] - 2023-11-23
 ### Added
 - Log capabilities for the firewall: packets are logged both in standard output 
