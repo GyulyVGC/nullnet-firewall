@@ -128,6 +128,7 @@ mod utils;
 /// the action to be taken for a given network packet.
 ///
 /// A new `Firewall` can be created from a textual file listing a set of rules.
+#[derive(Debug)]
 pub struct Firewall {
     rules: Vec<FirewallRule>,
     enabled: bool,
@@ -470,6 +471,10 @@ mod tests {
     const TEST_FILE_2: &str = "./samples/firewall_for_tests_2.txt";
     const TEST_FILE_3: &str = "./samples/firewall_for_tests_3.txt";
 
+    fn get_error_file_path(name: &str) -> String {
+        format!("./samples/firewall_for_tests_error_{name}.txt")
+    }
+
     #[test]
     fn test_new_firewall_from_file_1() {
         let rules = vec![
@@ -654,6 +659,56 @@ mod tests {
         );
         assert_eq!(
             firewall.resolve_packet(&TCP_PACKET, FirewallDirection::OUT),
+            FirewallAction::REJECT
+        );
+    }
+
+    #[test]
+    fn test_firewall_determine_action_for_packets_file_3_with_data_link_raw_ip() {
+        let mut firewall = Firewall::new(TEST_FILE_3).unwrap();
+        firewall.data_link(DataLink::RawIP);
+
+        // ipv6 packet
+        assert_eq!(
+            firewall.resolve_packet(&UDP_IPV6_PACKET[14..], FirewallDirection::IN),
+            FirewallAction::DENY
+        );
+        assert_eq!(
+            firewall.resolve_packet(&UDP_IPV6_PACKET[14..], FirewallDirection::OUT),
+            FirewallAction::ACCEPT
+        );
+
+        // tcp packet
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET[14..], FirewallDirection::IN),
+            FirewallAction::default()
+        );
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET[14..], FirewallDirection::OUT),
+            FirewallAction::default()
+        );
+
+        // change default policies
+        firewall.policy_in(FirewallAction::DENY);
+        firewall.policy_out(FirewallAction::REJECT);
+
+        // ipv6 packet
+        assert_eq!(
+            firewall.resolve_packet(&UDP_IPV6_PACKET[14..], FirewallDirection::IN),
+            FirewallAction::DENY
+        );
+        assert_eq!(
+            firewall.resolve_packet(&UDP_IPV6_PACKET[14..], FirewallDirection::OUT),
+            FirewallAction::ACCEPT
+        );
+
+        // tcp packet
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET[14..], FirewallDirection::IN),
+            FirewallAction::DENY
+        );
+        assert_eq!(
+            firewall.resolve_packet(&TCP_PACKET[14..], FirewallDirection::OUT),
             FirewallAction::REJECT
         );
     }
@@ -896,5 +951,202 @@ mod tests {
         assert!(!firewall.log);
         firewall.log(true);
         assert!(firewall.log);
+    }
+
+    #[test]
+    fn test_file_error_invalid_dport_value() {
+        let path = &get_error_file_path("invalid_dport_value");
+        let expected = String::from(
+            "Firewall error at line 12 - incorrect value for option '--dport 8.8.8.8'",
+        );
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_invalid_sport_value() {
+        let path = &get_error_file_path("invalid_sport_value");
+        let expected =
+            String::from("Firewall error at line 1 - incorrect value for option '--sport 70000'");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_invalid_dest_value() {
+        let path = &get_error_file_path("invalid_dest_value");
+        let expected =
+            String::from("Firewall error at line 18 - incorrect value for option '--dest 8080'");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_invalid_source_value() {
+        let path = &get_error_file_path("invalid_source_value");
+        let expected = String::from(
+            "Firewall error at line 9 - incorrect value for option '--source 8.8.8.8.7'",
+        );
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_invalid_icmp_type_value() {
+        let path = &get_error_file_path("invalid_icmp_type_value");
+        let expected = String::from(
+            "Firewall error at line 7 - incorrect value for option '--icmp-type ciao'",
+        );
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_invalid_protocol_value() {
+        let path = &get_error_file_path("invalid_protocol_value");
+        let expected =
+            String::from("Firewall error at line 101 - incorrect value for option '--proto -58'");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_invalid_direction() {
+        let path = &get_error_file_path("invalid_direction");
+        let expected = String::from("Firewall error at line 4 - incorrect direction 'this'");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_invalid_action() {
+        let path = &get_error_file_path("invalid_action");
+        let expected =
+            String::from("Firewall error at line 1 - incorrect action 'DROPTHISPACKETOMG'");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_unknown_option() {
+        let path = &get_error_file_path("unknown_option");
+        let expected =
+            String::from("Firewall error at line 3 - the specified option '-dest' doesn't exist");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_not_enough_arguments() {
+        let path = &get_error_file_path("not_enough_arguments");
+        let expected =
+            String::from("Firewall error at line 8 - not enough arguments supplied for rule");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_empty_option() {
+        let path = &get_error_file_path("empty_option");
+        let expected =
+            String::from("Firewall error at line 20 - the supplied option '--sport' is empty");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_duplicated_option() {
+        let path = &get_error_file_path("duplicated_option");
+        let expected = String::from(
+            "Firewall error at line 9 - duplicated option '--dport' for the same rule",
+        );
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_not_applicable_icmp_type() {
+        let path = &get_error_file_path("not_applicable_icmp_type");
+        let expected = String::from("Firewall error at line 6 - option '--icmp-type' is valid only if '--proto 1' or '--proto 58' is also specified");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
     }
 }
