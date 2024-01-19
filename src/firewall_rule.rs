@@ -280,7 +280,7 @@ mod tests {
         // --source expects a value => the following options is interpreted as value
         assert_eq!(
             FirewallRule::new(6, "OUT ACCEPT --source --dport 8"),
-            Err(FirewallError::InvalidSourceValue(9, "--dport".to_owned()))
+            Err(FirewallError::InvalidSourceValue(6, "--dport".to_owned()))
         );
     }
 

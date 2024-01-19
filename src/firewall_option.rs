@@ -242,7 +242,7 @@ mod tests {
         assert_eq!(err, FirewallError::InvalidSourceValue(55, "8".to_owned()));
         assert_eq!(
             err.to_string(),
-            "Firewall error at line 54 - incorrect value for option '--source 8'"
+            "Firewall error at line 55 - incorrect value for option '--source 8'"
         );
     }
 
