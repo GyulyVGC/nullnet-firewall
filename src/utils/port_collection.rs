@@ -14,10 +14,10 @@ impl PortCollection {
     const SEPARATOR: char = ',';
     const RANGE_SEPARATOR: char = ':';
 
-    pub(crate) fn new(opt: &str, str: &str) -> Result<Self, FirewallError> {
+    pub(crate) fn new(l: usize, opt: &str, str: &str) -> Result<Self, FirewallError> {
         let err = match opt {
-            FirewallOption::DPORT => FirewallError::InvalidDportValue(str.to_owned()),
-            FirewallOption::SPORT => FirewallError::InvalidSportValue(str.to_owned()),
+            FirewallOption::DPORT => FirewallError::InvalidDportValue(l, str.to_owned()),
+            FirewallOption::SPORT => FirewallError::InvalidSportValue(l, str.to_owned()),
             _ => panic!("Should not happen!"),
         };
         let mut ports = Vec::new();

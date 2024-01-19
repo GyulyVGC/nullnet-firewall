@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::str::FromStr;
 
 use crate::firewall_option::FirewallOption;
 use crate::{Fields, FirewallAction, FirewallDirection, FirewallError};
@@ -21,26 +20,26 @@ impl FirewallRule {
     const SEPARATOR: char = ' ';
     const QUICK: char = '+';
 
-    pub(crate) fn new(rule_str: &str) -> Result<Self, FirewallError> {
+    pub(crate) fn new(l: usize, rule_str: &str) -> Result<Self, FirewallError> {
         let mut parts = rule_str.split(Self::SEPARATOR).filter(|s| !s.is_empty());
         let mut quick = false;
 
-        let first = parts.next().ok_or(FirewallError::NotEnoughArguments)?;
+        let first = parts.next().ok_or(FirewallError::NotEnoughArguments(l))?;
         if first.eq(&Self::QUICK.to_string()) {
             quick = true;
         }
 
         // rule direction
         let direction_str = if quick {
-            parts.next().ok_or(FirewallError::NotEnoughArguments)?
+            parts.next().ok_or(FirewallError::NotEnoughArguments(l))?
         } else {
             first
         };
-        let direction = FirewallDirection::from_str(direction_str)?;
+        let direction = FirewallDirection::from_str_with_line(l, direction_str)?;
 
         // rule action
-        let action_str = parts.next().ok_or(FirewallError::NotEnoughArguments)?;
-        let action = FirewallAction::from_str(action_str)?;
+        let action_str = parts.next().ok_or(FirewallError::NotEnoughArguments(l))?;
+        let action = FirewallAction::from_str_with_line(l, action_str)?;
 
         // rule options
         let mut options = Vec::new();
@@ -48,10 +47,11 @@ impl FirewallRule {
             let option = parts.next();
             if let Some(option_str) = option {
                 let firewall_option = FirewallOption::new(
+                    l,
                     option_str,
                     parts
                         .next()
-                        .ok_or(FirewallError::EmptyOption(option_str.to_owned()))?,
+                        .ok_or(FirewallError::EmptyOption(l, option_str.to_owned()))?,
                 )?;
                 options.push(firewall_option);
             } else {
@@ -59,7 +59,7 @@ impl FirewallRule {
             }
         }
 
-        FirewallRule::validate_options(&options)?;
+        FirewallRule::validate_options(l, &options)?;
 
         Ok(Self {
             direction,
@@ -78,13 +78,14 @@ impl FirewallRule {
         self.direction.eq(direction)
     }
 
-    fn validate_options(options: &Vec<FirewallOption>) -> Result<(), FirewallError> {
+    fn validate_options(l: usize, options: &Vec<FirewallOption>) -> Result<(), FirewallError> {
         let mut options_map = HashMap::new();
 
         // check there is no duplicate options
         for option in options {
             if options_map.insert(option.to_option_str(), option).is_some() {
                 return Err(FirewallError::DuplicatedOption(
+                    l,
                     option.to_option_str().to_owned(),
                 ));
             }
@@ -96,10 +97,10 @@ impl FirewallRule {
         if options_map.contains_key(FirewallOption::ICMPTYPE) {
             match options_map.get(FirewallOption::PROTO) {
                 None => {
-                    return Err(FirewallError::NotApplicableIcmpType);
+                    return Err(FirewallError::NotApplicableIcmpType(l));
                 }
                 Some(FirewallOption::Proto(x)) if *x != 1 && *x != 58 => {
-                    return Err(FirewallError::NotApplicableIcmpType);
+                    return Err(FirewallError::NotApplicableIcmpType(l));
                 }
                 _ => {}
             }

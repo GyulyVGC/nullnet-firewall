@@ -15,10 +15,10 @@ impl IpCollection {
     const SEPARATOR: char = ',';
     const RANGE_SEPARATOR: char = '-';
 
-    pub(crate) fn new(opt: &str, str: &str) -> Result<Self, FirewallError> {
+    pub(crate) fn new(l: usize, opt: &str, str: &str) -> Result<Self, FirewallError> {
         let err = match opt {
-            FirewallOption::DEST => FirewallError::InvalidDestValue(str.to_owned()),
-            FirewallOption::SOURCE => FirewallError::InvalidSourceValue(str.to_owned()),
+            FirewallOption::DEST => FirewallError::InvalidDestValue(l, str.to_owned()),
+            FirewallOption::SOURCE => FirewallError::InvalidSourceValue(l, str.to_owned()),
             _ => panic!("Should not happen!"),
         };
         let mut ips = Vec::new();

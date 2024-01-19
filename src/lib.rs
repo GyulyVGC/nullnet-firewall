@@ -299,14 +299,17 @@ impl Firewall {
     pub fn update_rules(&mut self, file_path: &str) -> Result<(), FirewallError> {
         let mut rules = Vec::new();
         let file = File::open(file_path).unwrap();
-        for firewall_rule_str in BufReader::new(file)
-            .lines()
-            .flatten()
-            .map(|l| l.trim().to_owned())
-            .filter(|l| !l.starts_with(Self::COMMENT) && !l.is_empty())
-        {
-            rules.push(FirewallRule::new(&firewall_rule_str)?);
+
+        for (l, firewall_rule_str_result) in BufReader::new(file).lines().enumerate() {
+            let Ok(firewall_rule_str_raw) = firewall_rule_str_result else {
+                continue;
+            };
+            let firewall_rule_str = firewall_rule_str_raw.trim();
+            if !firewall_rule_str.starts_with(Self::COMMENT) && !firewall_rule_str.is_empty() {
+                rules.push(FirewallRule::new(l + 1, firewall_rule_str)?);
+            }
         }
+
         self.rules = rules;
         Ok(())
     }

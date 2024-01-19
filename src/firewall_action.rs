@@ -1,7 +1,6 @@
 use std::fmt::{Display, Formatter};
-use std::str::FromStr;
 
-use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::types::{ToSqlOutput};
 use rusqlite::ToSql;
 
 use crate::FirewallError;
@@ -22,18 +21,29 @@ pub enum FirewallAction {
     REJECT,
 }
 
-impl FromStr for FirewallAction {
-    type Err = FirewallError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+impl FirewallAction {
+    pub(crate) fn from_str_with_line(l: usize, s: &str) -> Result<Self, FirewallError> {
         match s {
             "ACCEPT" => Ok(Self::ACCEPT),
             "DENY" => Ok(Self::DENY),
             "REJECT" => Ok(Self::REJECT),
-            x => Err(FirewallError::InvalidAction(x.to_owned())),
+            x => Err(FirewallError::InvalidAction(l, x.to_owned())),
         }
     }
 }
+
+// impl FromStr for FirewallAction {
+//     type Err = FirewallError;
+//
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         match s {
+//             "ACCEPT" => Ok(Self::ACCEPT),
+//             "DENY" => Ok(Self::DENY),
+//             "REJECT" => Ok(Self::REJECT),
+//             x => Err(FirewallError::InvalidAction(x.to_owned())),
+//         }
+//     }
+// }
 
 impl Display for FirewallAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -47,11 +57,11 @@ impl ToSql for FirewallAction {
     }
 }
 
-impl FromSql for FirewallAction {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        FromSqlResult::Ok(FirewallAction::from_str(value.as_str().unwrap()).unwrap())
-    }
-}
+// impl FromSql for FirewallAction {
+//     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+//         FromSqlResult::Ok(FirewallAction::from_str(value.as_str().unwrap()).unwrap())
+//     }
+// }
 
 #[cfg(test)]
 mod tests {

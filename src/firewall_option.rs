@@ -29,27 +29,27 @@ impl FirewallOption {
     pub(crate) const SOURCE: &'static str = "--source";
     pub(crate) const SPORT: &'static str = "--sport";
 
-    pub(crate) fn new(option: &str, value: &str) -> Result<Self, FirewallError> {
+    pub(crate) fn new(l: usize, option: &str, value: &str) -> Result<Self, FirewallError> {
         Ok(match option {
-            FirewallOption::DEST => Self::Dest(IpCollection::new(FirewallOption::DEST, value)?),
+            FirewallOption::DEST => Self::Dest(IpCollection::new(l, FirewallOption::DEST, value)?),
             FirewallOption::DPORT => {
-                Self::Dport(PortCollection::new(FirewallOption::DPORT, value)?)
+                Self::Dport(PortCollection::new(l, FirewallOption::DPORT, value)?)
             }
             FirewallOption::ICMPTYPE => Self::IcmpType(
                 u8::from_str(value)
-                    .map_err(|_| FirewallError::InvalidIcmpTypeValue(value.to_owned()))?,
+                    .map_err(|_| FirewallError::InvalidIcmpTypeValue(l, value.to_owned()))?,
             ),
             FirewallOption::PROTO => Self::Proto(
                 u8::from_str(value)
-                    .map_err(|_| FirewallError::InvalidProtocolValue(value.to_owned()))?,
+                    .map_err(|_| FirewallError::InvalidProtocolValue(l, value.to_owned()))?,
             ),
             FirewallOption::SOURCE => {
-                Self::Source(IpCollection::new(FirewallOption::SOURCE, value)?)
+                Self::Source(IpCollection::new(l, FirewallOption::SOURCE, value)?)
             }
             FirewallOption::SPORT => {
-                Self::Sport(PortCollection::new(FirewallOption::SPORT, value)?)
+                Self::Sport(PortCollection::new(l, FirewallOption::SPORT, value)?)
             }
-            x => return Err(FirewallError::UnknownOption(x.to_owned())),
+            x => return Err(FirewallError::UnknownOption(l, x.to_owned())),
         })
     }
 

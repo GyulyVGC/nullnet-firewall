@@ -1,7 +1,6 @@
 use std::fmt::{Display, Formatter};
-use std::str::FromStr;
 
-use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::types::{ToSqlOutput};
 use rusqlite::ToSql;
 
 use crate::FirewallError;
@@ -17,17 +16,27 @@ pub enum FirewallDirection {
     OUT,
 }
 
-impl FromStr for FirewallDirection {
-    type Err = FirewallError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+impl FirewallDirection {
+    pub(crate) fn from_str_with_line(l: usize, s: &str) -> Result<Self, FirewallError> {
         match s {
             "IN" => Ok(Self::IN),
             "OUT" => Ok(Self::OUT),
-            x => Err(FirewallError::InvalidDirection(x.to_owned())),
+            x => Err(FirewallError::InvalidDirection(l, x.to_owned())),
         }
     }
 }
+
+// impl FromStr for FirewallDirection {
+//     type Err = FirewallError;
+//
+//     fn from_str(s: &str) -> Result<Self, Self::Err> {
+//         match s {
+//             "IN" => Ok(Self::IN),
+//             "OUT" => Ok(Self::OUT),
+//             x => Err(FirewallError::InvalidDirection(x.to_owned())),
+//         }
+//     }
+// }
 
 impl Display for FirewallDirection {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -41,11 +50,11 @@ impl ToSql for FirewallDirection {
     }
 }
 
-impl FromSql for FirewallDirection {
-    fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-        FromSqlResult::Ok(FirewallDirection::from_str(value.as_str().unwrap()).unwrap())
-    }
-}
+// impl FromSql for FirewallDirection {
+//     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+//         FromSqlResult::Ok(FirewallDirection::from_str(value.as_str().unwrap()).unwrap())
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
