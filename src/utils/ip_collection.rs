@@ -15,10 +15,10 @@ impl IpCollection {
     const SEPARATOR: char = ',';
     const RANGE_SEPARATOR: char = '-';
 
-    pub(crate) fn new(opt: &str, str: &str) -> Result<Self, FirewallError> {
+    pub(crate) fn new(l: usize, opt: &str, str: &str) -> Result<Self, FirewallError> {
         let err = match opt {
-            FirewallOption::DEST => FirewallError::InvalidDestValue(str.to_owned()),
-            FirewallOption::SOURCE => FirewallError::InvalidSourceValue(str.to_owned()),
+            FirewallOption::DEST => FirewallError::InvalidDestValue(l, str.to_owned()),
+            FirewallOption::SOURCE => FirewallError::InvalidSourceValue(l, str.to_owned()),
             _ => panic!("Should not happen!"),
         };
         let mut ips = Vec::new();
@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn test_new_source_collections() {
         assert_eq!(
-            IpCollection::new(FirewallOption::SOURCE, "1.1.1.1,2.2.2.2").unwrap(),
+            IpCollection::new(1, FirewallOption::SOURCE, "1.1.1.1,2.2.2.2").unwrap(),
             IpCollection {
                 ips: vec![
                     IpAddr::from_str("1.1.1.1").unwrap(),
@@ -88,6 +88,7 @@ mod tests {
 
         assert_eq!(
             IpCollection::new(
+                22,
                 FirewallOption::SOURCE,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
             )
@@ -112,7 +113,7 @@ mod tests {
         );
 
         assert_eq!(
-            IpCollection::new(FirewallOption::SOURCE, "aaaa::ffff,bbbb::1-cccc::2").unwrap(),
+            IpCollection::new(3, FirewallOption::SOURCE, "aaaa::ffff,bbbb::1-cccc::2").unwrap(),
             IpCollection {
                 ips: vec![IpAddr::from_str("aaaa::ffff").unwrap(),],
                 ranges: vec![RangeInclusive::new(
@@ -126,7 +127,7 @@ mod tests {
     #[test]
     fn test_new_dest_collections() {
         assert_eq!(
-            IpCollection::new(FirewallOption::DEST, "1.1.1.1,2.2.2.2,8.8.8.8").unwrap(),
+            IpCollection::new(44, FirewallOption::DEST, "1.1.1.1,2.2.2.2,8.8.8.8").unwrap(),
             IpCollection {
                 ips: vec![
                     IpAddr::from_str("1.1.1.1").unwrap(),
@@ -139,6 +140,7 @@ mod tests {
 
         assert_eq!(
             IpCollection::new(
+                5,
                 FirewallOption::DEST,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
             )
@@ -163,7 +165,12 @@ mod tests {
         );
 
         assert_eq!(
-            IpCollection::new(FirewallOption::DEST, "aaaa::ffff,bbbb::1-cccc::2,ff::dd").unwrap(),
+            IpCollection::new(
+                66,
+                FirewallOption::DEST,
+                "aaaa::ffff,bbbb::1-cccc::2,ff::dd"
+            )
+            .unwrap(),
             IpCollection {
                 ips: vec![
                     IpAddr::from_str("aaaa::ffff").unwrap(),
@@ -181,20 +188,24 @@ mod tests {
     fn test_new_source_collections_invalid() {
         assert_eq!(
             IpCollection::new(
+                7,
                 FirewallOption::SOURCE,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9"
             ),
             Err(FirewallError::InvalidSourceValue(
+                7,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9".to_owned()
             ))
         );
 
         assert_eq!(
             IpCollection::new(
+                89,
                 FirewallOption::SOURCE,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9"
             ),
             Err(FirewallError::InvalidSourceValue(
+                89,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9".to_owned()
             ))
         );
@@ -204,20 +215,24 @@ mod tests {
     fn test_new_dest_collections_invalid() {
         assert_eq!(
             IpCollection::new(
+                6,
                 FirewallOption::DEST,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9"
             ),
             Err(FirewallError::InvalidDestValue(
+                6,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9".to_owned()
             ))
         );
 
         assert_eq!(
             IpCollection::new(
+                8,
                 FirewallOption::DEST,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9"
             ),
             Err(FirewallError::InvalidDestValue(
+                8,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1:10.0.0.255,9.9.9.9".to_owned()
             ))
         );
@@ -226,7 +241,7 @@ mod tests {
     #[test]
     fn test_new_ip_collections_invalid_option_proto() {
         let result = std::panic::catch_unwind(|| {
-            IpCollection::new(FirewallOption::PROTO, "1.1.1.1,2.2.2.2")
+            IpCollection::new(7, FirewallOption::PROTO, "1.1.1.1,2.2.2.2")
         });
         assert!(result.is_err());
     }
@@ -234,7 +249,7 @@ mod tests {
     #[test]
     fn test_new_ip_collections_invalid_option_sport() {
         let result = std::panic::catch_unwind(|| {
-            IpCollection::new(FirewallOption::SPORT, "1.1.1.1,2.2.2.2")
+            IpCollection::new(7, FirewallOption::SPORT, "1.1.1.1,2.2.2.2")
         });
         assert!(result.is_err());
     }
@@ -242,7 +257,7 @@ mod tests {
     #[test]
     fn test_new_ip_collections_invalid_option_dport() {
         let result = std::panic::catch_unwind(|| {
-            IpCollection::new(FirewallOption::DPORT, "1.1.1.1,2.2.2.2")
+            IpCollection::new(6, FirewallOption::DPORT, "1.1.1.1,2.2.2.2")
         });
         assert!(result.is_err());
     }
@@ -250,7 +265,7 @@ mod tests {
     #[test]
     fn test_new_ip_collections_invalid_option_icmp_type() {
         let result = std::panic::catch_unwind(|| {
-            PortCollection::new(FirewallOption::ICMPTYPE, "1.1.1.1,2.2.2.2")
+            PortCollection::new(1, FirewallOption::ICMPTYPE, "1.1.1.1,2.2.2.2")
         });
         assert!(result.is_err());
     }
@@ -259,6 +274,7 @@ mod tests {
     fn test_ip_collection_contains() {
         for opt in [FirewallOption::DEST, FirewallOption::SOURCE] {
             let collection = IpCollection::new(
+                11,
                 opt,
                 "1.1.1.1,2.2.2.2,3.3.3.3-5.5.5.5,10.0.0.1-10.0.0.255,9.9.9.9",
             )
@@ -284,7 +300,7 @@ mod tests {
     fn test_ip_collection_contains_ipv6() {
         for opt in [FirewallOption::DEST, FirewallOption::SOURCE] {
             let collection =
-                IpCollection::new(opt, "2001:db8:1234:0000:0000:0000:0000:0000-2001:db8:1234:ffff:ffff:ffff:ffff:ffff,daa::aad,caa::aac").unwrap();
+                IpCollection::new(1, opt, "2001:db8:1234:0000:0000:0000:0000:0000-2001:db8:1234:ffff:ffff:ffff:ffff:ffff,daa::aad,caa::aac").unwrap();
             assert!(collection.contains(Some(
                 IpAddr::from_str("2001:db8:1234:0000:0000:0000:0000:0000").unwrap()
             )));

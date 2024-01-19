@@ -14,10 +14,10 @@ impl PortCollection {
     const SEPARATOR: char = ',';
     const RANGE_SEPARATOR: char = ':';
 
-    pub(crate) fn new(opt: &str, str: &str) -> Result<Self, FirewallError> {
+    pub(crate) fn new(l: usize, opt: &str, str: &str) -> Result<Self, FirewallError> {
         let err = match opt {
-            FirewallOption::DPORT => FirewallError::InvalidDportValue(str.to_owned()),
-            FirewallOption::SPORT => FirewallError::InvalidSportValue(str.to_owned()),
+            FirewallOption::DPORT => FirewallError::InvalidDportValue(l, str.to_owned()),
+            FirewallOption::SPORT => FirewallError::InvalidSportValue(l, str.to_owned()),
             _ => panic!("Should not happen!"),
         };
         let mut ports = Vec::new();
@@ -70,7 +70,7 @@ mod tests {
     #[test]
     fn test_new_sport_collections() {
         assert_eq!(
-            PortCollection::new(FirewallOption::SPORT, "1,2,3,4,999").unwrap(),
+            PortCollection::new(1, FirewallOption::SPORT, "1,2,3,4,999").unwrap(),
             PortCollection {
                 ports: vec![1, 2, 3, 4, 999],
                 ranges: vec![]
@@ -78,7 +78,7 @@ mod tests {
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::SPORT, "1,2,3,4,900:999").unwrap(),
+            PortCollection::new(2, FirewallOption::SPORT, "1,2,3,4,900:999").unwrap(),
             PortCollection {
                 ports: vec![1, 2, 3, 4],
                 ranges: vec![900..=999]
@@ -86,7 +86,7 @@ mod tests {
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::SPORT, "1:999").unwrap(),
+            PortCollection::new(3, FirewallOption::SPORT, "1:999").unwrap(),
             PortCollection {
                 ports: vec![],
                 ranges: vec![1..=999]
@@ -94,7 +94,7 @@ mod tests {
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::SPORT, "1,2,10:20,3,4,999:1200").unwrap(),
+            PortCollection::new(4, FirewallOption::SPORT, "1,2,10:20,3,4,999:1200").unwrap(),
             PortCollection {
                 ports: vec![1, 2, 3, 4],
                 ranges: vec![10..=20, 999..=1200]
@@ -105,7 +105,7 @@ mod tests {
     #[test]
     fn test_new_dport_collections() {
         assert_eq!(
-            PortCollection::new(FirewallOption::DPORT, "1").unwrap(),
+            PortCollection::new(5, FirewallOption::DPORT, "1").unwrap(),
             PortCollection {
                 ports: vec![1],
                 ranges: vec![]
@@ -113,7 +113,7 @@ mod tests {
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::DPORT, "1,2,3,4,900:999").unwrap(),
+            PortCollection::new(6, FirewallOption::DPORT, "1,2,3,4,900:999").unwrap(),
             PortCollection {
                 ports: vec![1, 2, 3, 4],
                 ranges: vec![900..=999]
@@ -121,7 +121,7 @@ mod tests {
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::DPORT, "55:999").unwrap(),
+            PortCollection::new(7, FirewallOption::DPORT, "55:999").unwrap(),
             PortCollection {
                 ports: vec![],
                 ranges: vec![55..=999]
@@ -129,7 +129,7 @@ mod tests {
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::DPORT, "1,2,10:20,3,4,999:1200").unwrap(),
+            PortCollection::new(8, FirewallOption::DPORT, "1,2,10:20,3,4,999:1200").unwrap(),
             PortCollection {
                 ports: vec![1, 2, 3, 4],
                 ranges: vec![10..=20, 999..=1200]
@@ -140,22 +140,25 @@ mod tests {
     #[test]
     fn test_new_sport_collections_invalid() {
         assert_eq!(
-            PortCollection::new(FirewallOption::SPORT, "1,2,10:20,3,4,:1200"),
+            PortCollection::new(12, FirewallOption::SPORT, "1,2,10:20,3,4,:1200"),
             Err(FirewallError::InvalidSportValue(
+                12,
                 "1,2,10:20,3,4,:1200".to_owned()
             ))
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::SPORT, "1,2,10:20,3,4,999-1200"),
+            PortCollection::new(13, FirewallOption::SPORT, "1,2,10:20,3,4,999-1200"),
             Err(FirewallError::InvalidSportValue(
+                13,
                 "1,2,10:20,3,4,999-1200".to_owned()
             ))
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::SPORT, "1,2,10:20,3,4,999-1200,"),
+            PortCollection::new(33, FirewallOption::SPORT, "1,2,10:20,3,4,999-1200,"),
             Err(FirewallError::InvalidSportValue(
+                33,
                 "1,2,10:20,3,4,999-1200,".to_owned()
             ))
         );
@@ -164,22 +167,25 @@ mod tests {
     #[test]
     fn test_new_dport_collections_invalid() {
         assert_eq!(
-            PortCollection::new(FirewallOption::DPORT, "1,2,10:20,3,4,:1200"),
+            PortCollection::new(5, FirewallOption::DPORT, "1,2,10:20,3,4,:1200"),
             Err(FirewallError::InvalidDportValue(
+                5,
                 "1,2,10:20,3,4,:1200".to_owned()
             ))
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::DPORT, "1,2,10:20,3,4,999-1200"),
+            PortCollection::new(8, FirewallOption::DPORT, "1,2,10:20,3,4,999-1200"),
             Err(FirewallError::InvalidDportValue(
+                8,
                 "1,2,10:20,3,4,999-1200".to_owned()
             ))
         );
 
         assert_eq!(
-            PortCollection::new(FirewallOption::DPORT, "1,2,10:20,3,4,999-1200,"),
+            PortCollection::new(12, FirewallOption::DPORT, "1,2,10:20,3,4,999-1200,"),
             Err(FirewallError::InvalidDportValue(
+                12,
                 "1,2,10:20,3,4,999-1200,".to_owned()
             ))
         );
@@ -188,35 +194,35 @@ mod tests {
     #[test]
     fn test_new_port_collections_invalid_option_proto() {
         let result =
-            std::panic::catch_unwind(|| PortCollection::new(FirewallOption::PROTO, "55:999"));
+            std::panic::catch_unwind(|| PortCollection::new(1, FirewallOption::PROTO, "55:999"));
         assert!(result.is_err());
     }
 
     #[test]
     fn test_new_port_collections_invalid_option_source() {
         let result =
-            std::panic::catch_unwind(|| PortCollection::new(FirewallOption::SOURCE, "55:999"));
+            std::panic::catch_unwind(|| PortCollection::new(3, FirewallOption::SOURCE, "55:999"));
         assert!(result.is_err());
     }
 
     #[test]
     fn test_new_port_collections_invalid_option_dest() {
         let result =
-            std::panic::catch_unwind(|| PortCollection::new(FirewallOption::DEST, "55:999"));
+            std::panic::catch_unwind(|| PortCollection::new(5, FirewallOption::DEST, "55:999"));
         assert!(result.is_err());
     }
 
     #[test]
     fn test_new_port_collections_invalid_option_icmp_type() {
         let result =
-            std::panic::catch_unwind(|| PortCollection::new(FirewallOption::ICMPTYPE, "55:999"));
+            std::panic::catch_unwind(|| PortCollection::new(7, FirewallOption::ICMPTYPE, "55:999"));
         assert!(result.is_err());
     }
 
     #[test]
     fn test_port_collection_contains() {
         for opt in [FirewallOption::DPORT, FirewallOption::SPORT] {
-            let collection = PortCollection::new(opt, "1,2,25:30,55,101:117").unwrap();
+            let collection = PortCollection::new(11, opt, "1,2,25:30,55,101:117").unwrap();
             assert!(collection.contains(Some(1)));
             assert!(collection.contains(Some(2)));
             assert!(collection.contains(Some(25)));

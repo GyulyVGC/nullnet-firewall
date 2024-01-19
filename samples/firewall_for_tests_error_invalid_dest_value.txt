@@ -1,0 +1,23 @@
+
+
+# Firewall rules with error!!! (this is a comment line)
+
+
+## some blank lines....
+
+IN REJECT --source 8.8.8.8
+# Rules marked with '+' have higher priority
++ IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
+OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
+
+
+IN REJECT --source 8.8.8.8
+# Rules marked with '+' have higher priority
++ IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
+OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
+OUT REJECT --dest 8080
+
+IN REJECT --source 8.8.8.8
+# Rules marked with '+' have higher priority
++ IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
+OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
