@@ -2,6 +2,10 @@
 
 All releases with the relative changes are documented in this file.
 
+## [0.2.2] - 2024-01-19
+### Changed
+- `FirewallError`s now also include information about the file line number responsible for the error, enabling an easier debugging activity.
+
 ## [0.2.1] - 2024-01-15
 ### Added
 - `Firewall::data_link` method to set the `DataLink` type of the `Firewall`: in addition to Ethernet, now also raw IP is supported.
