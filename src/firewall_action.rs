@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use rusqlite::types::{ToSqlOutput};
+use rusqlite::types::ToSqlOutput;
 use rusqlite::ToSql;
 
 use crate::FirewallError;
@@ -32,19 +32,6 @@ impl FirewallAction {
     }
 }
 
-// impl FromStr for FirewallAction {
-//     type Err = FirewallError;
-//
-//     fn from_str(s: &str) -> Result<Self, Self::Err> {
-//         match s {
-//             "ACCEPT" => Ok(Self::ACCEPT),
-//             "DENY" => Ok(Self::DENY),
-//             "REJECT" => Ok(Self::REJECT),
-//             x => Err(FirewallError::InvalidAction(x.to_owned())),
-//         }
-//     }
-// }
-
 impl Display for FirewallAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{self:?}")
@@ -57,16 +44,8 @@ impl ToSql for FirewallAction {
     }
 }
 
-// impl FromSql for FirewallAction {
-//     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-//         FromSqlResult::Ok(FirewallAction::from_str(value.as_str().unwrap()).unwrap())
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use rusqlite::types::ToSqlOutput;
     use rusqlite::types::Value::Text;
     use rusqlite::ToSql;
@@ -76,18 +55,24 @@ mod tests {
     #[test]
     fn test_firewall_actions_from_str() {
         assert_eq!(
-            FirewallAction::from_str("ACCEPT"),
+            FirewallAction::from_str_with_line(1, "ACCEPT"),
             Ok(FirewallAction::ACCEPT)
         );
-        assert_eq!(FirewallAction::from_str("DENY"), Ok(FirewallAction::DENY));
         assert_eq!(
-            FirewallAction::from_str("REJECT"),
+            FirewallAction::from_str_with_line(1, "DENY"),
+            Ok(FirewallAction::DENY)
+        );
+        assert_eq!(
+            FirewallAction::from_str_with_line(1, "REJECT"),
             Ok(FirewallAction::REJECT)
         );
 
-        let err = FirewallAction::from_str("DROP").unwrap_err();
-        assert_eq!(err, FirewallError::InvalidAction("DROP".to_owned()));
-        assert_eq!(err.to_string(), "Firewall error - incorrect action 'DROP'");
+        let err = FirewallAction::from_str_with_line(28, "DROP").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidAction(28, "DROP".to_owned()));
+        assert_eq!(
+            err.to_string(),
+            "Firewall error at line 28 - incorrect action 'DROP'"
+        );
     }
 
     #[test]

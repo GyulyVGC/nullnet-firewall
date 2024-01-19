@@ -89,12 +89,51 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
 
 #[cfg(test)]
 mod tests {
+    use rusqlite::types::{FromSql, FromSqlResult, ValueRef};
     use rusqlite::Connection;
     use serial_test::serial;
+    use std::str::FromStr;
 
     use crate::logs::logger::{Logger, SQLITE_PATH};
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
-    use crate::{DataLink, Fields, FirewallAction, FirewallDirection, LogEntry};
+    use crate::{DataLink, Fields, FirewallAction, FirewallDirection, FirewallError, LogEntry};
+
+    impl FromStr for FirewallAction {
+        type Err = FirewallError;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            match s {
+                "ACCEPT" => Ok(Self::ACCEPT),
+                "DENY" => Ok(Self::DENY),
+                "REJECT" => Ok(Self::REJECT),
+                x => Err(FirewallError::InvalidAction(0, x.to_owned())),
+            }
+        }
+    }
+
+    impl FromSql for FirewallAction {
+        fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+            FromSqlResult::Ok(FirewallAction::from_str(value.as_str().unwrap()).unwrap())
+        }
+    }
+
+    impl FromStr for FirewallDirection {
+        type Err = FirewallError;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            match s {
+                "IN" => Ok(Self::IN),
+                "OUT" => Ok(Self::OUT),
+                x => Err(FirewallError::InvalidDirection(0, x.to_owned())),
+            }
+        }
+    }
+
+    impl FromSql for FirewallDirection {
+        fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
+            FromSqlResult::Ok(FirewallDirection::from_str(value.as_str().unwrap()).unwrap())
+        }
+    }
 
     fn drop_table(logger: &Logger) {
         logger
