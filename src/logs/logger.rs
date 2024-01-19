@@ -89,10 +89,11 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use rusqlite::types::{FromSql, FromSqlResult, ValueRef};
     use rusqlite::Connection;
     use serial_test::serial;
-    use std::str::FromStr;
 
     use crate::logs::logger::{Logger, SQLITE_PATH};
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
