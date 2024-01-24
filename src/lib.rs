@@ -177,12 +177,6 @@ impl Firewall {
     /// ```
     pub fn new(file_path: &str) -> Result<Self, FirewallError> {
         let (tx, rx): (Sender<LogEntry>, Receiver<LogEntry>) = mpsc::channel();
-        thread::Builder::new()
-            .name("logger".to_string())
-            .spawn(move || {
-                log(&rx);
-            })
-            .unwrap();
 
         let mut firewall = Firewall {
             rules: Vec::new(),
@@ -195,6 +189,13 @@ impl Firewall {
         };
 
         firewall.update_rules(file_path)?;
+
+        thread::Builder::new()
+            .name("logger".to_string())
+            .spawn(move || {
+                log(&rx);
+            })
+            .unwrap();
 
         Ok(firewall)
     }
