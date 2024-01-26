@@ -21,6 +21,8 @@ pub enum FirewallError {
     InvalidDirection(usize, String),
     /// An invalid action has been specified for a firewall rule.
     InvalidAction(usize, String),
+    /// An invalid log level has been specified for a firewall rule.
+    InvalidLogLevel(usize, String),
     /// An unknown option has been specified for a firewall rule.
     UnknownOption(usize, String),
     /// An empty option has been specified for a firewall rule.
@@ -103,6 +105,9 @@ impl Display for FirewallError {
                     FirewallOption::PROTO
                 ),
             ),
+            FirewallError::InvalidLogLevel(l, log_level) => {
+                (l, format!("incorrect log level '{log_level}'"))
+            }
         };
 
         write!(f, "Firewall error at line {l} - {err_info}")

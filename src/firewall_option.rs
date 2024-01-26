@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use crate::utils::ip_collection::IpCollection;
+use crate::utils::log_level::LogLevel;
 use crate::utils::port_collection::PortCollection;
 use crate::{Fields, FirewallError};
 
@@ -19,6 +20,8 @@ pub(crate) enum FirewallOption {
     Source(IpCollection),
     /// Source ports
     Sport(PortCollection),
+    /// Log level for the rule
+    Log(LogLevel),
 }
 
 impl FirewallOption {
@@ -28,6 +31,7 @@ impl FirewallOption {
     pub(crate) const PROTO: &'static str = "--proto";
     pub(crate) const SOURCE: &'static str = "--source";
     pub(crate) const SPORT: &'static str = "--sport";
+    pub(crate) const LOG: &'static str = "--log";
 
     pub(crate) fn new(l: usize, option: &str, value: &str) -> Result<Self, FirewallError> {
         Ok(match option {
@@ -49,6 +53,7 @@ impl FirewallOption {
             FirewallOption::SPORT => {
                 Self::Sport(PortCollection::new(l, FirewallOption::SPORT, value)?)
             }
+            FirewallOption::LOG => Self::Log(LogLevel::from_str_with_line(l, value)?),
             x => return Err(FirewallError::UnknownOption(l, x.to_owned())),
         })
     }
@@ -73,6 +78,7 @@ impl FirewallOption {
             }
             FirewallOption::Source(ip_collection) => ip_collection.contains(fields.source),
             FirewallOption::Sport(port_collection) => port_collection.contains(fields.sport),
+            FirewallOption::Log(_) => true,
         }
     }
 
@@ -84,6 +90,7 @@ impl FirewallOption {
             FirewallOption::Source(_) => FirewallOption::SOURCE,
             FirewallOption::Sport(_) => FirewallOption::SPORT,
             FirewallOption::IcmpType(_) => FirewallOption::ICMPTYPE,
+            FirewallOption::Log(_) => FirewallOption::LOG,
         }
     }
 }
