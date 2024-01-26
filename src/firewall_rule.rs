@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::firewall_option::FirewallOption;
+use crate::utils::log_level::LogLevel;
 use crate::{Fields, FirewallAction, FirewallDirection, FirewallError};
 
 /// A firewall rule
@@ -14,6 +15,8 @@ pub(crate) struct FirewallRule {
     pub(crate) options: Vec<FirewallOption>,
     /// Is this a quick rule?
     pub(crate) quick: bool,
+    /// Log level related to this specific rule
+    pub(crate) log_level: Option<LogLevel>,
 }
 
 impl FirewallRule {
@@ -23,6 +26,7 @@ impl FirewallRule {
     pub(crate) fn new(l: usize, rule_str: &str) -> Result<Self, FirewallError> {
         let mut parts = rule_str.split(Self::SEPARATOR).filter(|s| !s.is_empty());
         let mut quick = false;
+        let mut log_level = None;
 
         let first = parts.next().ok_or(FirewallError::NotEnoughArguments(l))?;
         if first.eq(&Self::QUICK.to_string()) {
@@ -53,6 +57,9 @@ impl FirewallRule {
                         .next()
                         .ok_or(FirewallError::EmptyOption(l, option_str.to_owned()))?,
                 )?;
+                if let FirewallOption::Log(level) = &firewall_option {
+                    log_level = Some(*level);
+                }
                 options.push(firewall_option);
             } else {
                 break;
@@ -66,6 +73,7 @@ impl FirewallRule {
             action,
             options,
             quick,
+            log_level,
         })
     }
 

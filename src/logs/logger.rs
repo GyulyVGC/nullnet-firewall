@@ -2,6 +2,7 @@ use std::sync::mpsc::Receiver;
 
 use rusqlite::Connection;
 
+use crate::utils::log_level::LogLevel;
 use crate::LogEntry;
 
 struct Logger {
@@ -79,11 +80,17 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
     loop {
         let log_entry = rx.recv().expect("channel is down");
 
-        // log into console
-        println!("{log_entry}");
-
-        // log into db
-        logger.add_entry(log_entry);
+        match log_entry.log_level {
+            LogLevel::Db => logger.add_entry(log_entry),
+            LogLevel::Console => println!("{log_entry}"),
+            LogLevel::All => {
+                println!("{log_entry}");
+                logger.add_entry(log_entry);
+            }
+            LogLevel::Off => {
+                panic!("Don't send on the channel entries that don't require logging!")
+            }
+        }
     }
 }
 

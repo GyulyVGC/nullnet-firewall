@@ -1,7 +1,7 @@
 use crate::FirewallError;
 
-#[derive(Debug, Eq, PartialEq)]
-pub(crate) enum LogLevel {
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub enum LogLevel {
     Off,
     Db,
     Console,

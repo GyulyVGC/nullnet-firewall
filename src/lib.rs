@@ -113,6 +113,7 @@ pub use crate::firewall_error::FirewallError;
 use crate::firewall_rule::FirewallRule;
 use crate::logs::log_entry::LogEntry;
 use crate::logs::logger::log;
+use crate::utils::log_level::LogLevel;
 
 mod data_link;
 mod fields;
@@ -136,7 +137,7 @@ pub struct Firewall {
     policy_out: FirewallAction,
     tx: Sender<LogEntry>,
     data_link: DataLink,
-    log: bool,
+    log_level: LogLevel,
 }
 
 impl Firewall {
@@ -185,7 +186,7 @@ impl Firewall {
             policy_out: FirewallAction::default(),
             tx,
             data_link: DataLink::default(),
-            log: true,
+            log_level: LogLevel::All,
         };
 
         firewall.update_rules(file_path)?;
@@ -240,6 +241,7 @@ impl Firewall {
         }
 
         let mut action_opt = None;
+        let mut log_level_opt = None;
 
         // structure the packet as a set of relevant fields
         let fields = Fields::new(packet, self.data_link);
@@ -249,9 +251,11 @@ impl Firewall {
             if rule.matches_packet(&fields, &direction) {
                 if rule.quick {
                     action_opt = Some(rule.action);
+                    log_level_opt = rule.log_level;
                     break;
                 } else if action_opt.is_none() {
                     action_opt = Some(rule.action);
+                    log_level_opt = rule.log_level;
                 }
             }
         }
@@ -260,10 +264,11 @@ impl Firewall {
             FirewallDirection::IN => self.policy_in,
             FirewallDirection::OUT => self.policy_out,
         });
+        let log_level = log_level_opt.unwrap_or(self.log_level);
 
-        if self.log {
+        if log_level != LogLevel::Off {
             // send the log entry to the logger thread
-            let log_entry = LogEntry::new(&fields, direction, action);
+            let log_entry = LogEntry::new(&fields, direction, action, log_level);
             self.tx
                 .send(log_entry)
                 .expect("the firewall logger routine aborted");
@@ -452,8 +457,8 @@ impl Firewall {
     /// // disable logging
     /// firewall.log(false);
     /// ```
-    pub fn log(&mut self, log: bool) {
-        self.log = log;
+    pub fn log_level(&mut self, log_level: LogLevel) {
+        self.log_level = log_level;
     }
 }
 

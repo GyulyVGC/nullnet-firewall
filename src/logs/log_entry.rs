@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use crate::logs::log_ip::LogIp;
 use crate::logs::log_timestamp::LogTimestamp;
+use crate::utils::log_level::LogLevel;
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
 
@@ -17,6 +18,7 @@ pub(crate) struct LogEntry {
     pub(crate) proto: Option<u8>,
     pub(crate) icmp_type: Option<u8>,
     pub(crate) size: usize,
+    pub(crate) log_level: LogLevel,
 }
 
 impl LogEntry {
@@ -24,6 +26,7 @@ impl LogEntry {
         fields: &Fields,
         direction: FirewallDirection,
         action: FirewallAction,
+        log_level: LogLevel,
     ) -> LogEntry {
         LogEntry {
             timestamp: LogTimestamp::from_date_time(chrono::offset::Local::now()),
@@ -36,6 +39,7 @@ impl LogEntry {
             proto: fields.proto,
             icmp_type: fields.icmp_type,
             size: fields.size,
+            log_level,
         }
     }
 }
