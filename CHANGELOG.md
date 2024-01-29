@@ -8,6 +8,9 @@ All releases with the relative changes are documented in this file.
 - New option `--log-level` for user-defined firewall rules, which allows to specify the logging strategy to use for traffic matching a given rule; if this option is not set, the default firewall logging strategy will be used.
 ### Changed
 - `Firewall::log` method (that was accepting a boolean parameter) has been renamed to `Firewall::log_level` and now accepts a `LogLevel` parameter, useful to set the default firewall logging strategy.
+### Fixed
+- Only spawn logger thread if a valid firewall was instantiated.
+- Added `bundled` feature to `rusqlite` dependency to properly work on Windows.
 
 ## [0.2.2] - 2024-01-19
 ### Changed
