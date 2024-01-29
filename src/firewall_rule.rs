@@ -57,8 +57,8 @@ impl FirewallRule {
                         .next()
                         .ok_or(FirewallError::EmptyOption(l, option_str.to_owned()))?,
                 )?;
-                if let FirewallOption::LogLevel(level) = &firewall_option {
-                    log_level = Some(*level);
+                if let FirewallOption::LogLevel(level) = firewall_option {
+                    log_level = Some(level);
                 }
                 options.push(firewall_option);
             } else {
