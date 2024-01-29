@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use crate::log_level::LogLevel;
 use crate::utils::ip_collection::IpCollection;
 use crate::utils::port_collection::PortCollection;
 use crate::{Fields, FirewallError};
@@ -19,6 +20,8 @@ pub(crate) enum FirewallOption {
     Source(IpCollection),
     /// Source ports
     Sport(PortCollection),
+    /// Log level
+    LogLevel(LogLevel),
 }
 
 impl FirewallOption {
@@ -28,6 +31,7 @@ impl FirewallOption {
     pub(crate) const PROTO: &'static str = "--proto";
     pub(crate) const SOURCE: &'static str = "--source";
     pub(crate) const SPORT: &'static str = "--sport";
+    pub(crate) const LOGLEVEL: &'static str = "--log-level";
 
     pub(crate) fn new(l: usize, option: &str, value: &str) -> Result<Self, FirewallError> {
         Ok(match option {
@@ -49,6 +53,7 @@ impl FirewallOption {
             FirewallOption::SPORT => {
                 Self::Sport(PortCollection::new(l, FirewallOption::SPORT, value)?)
             }
+            FirewallOption::LOGLEVEL => Self::LogLevel(LogLevel::from_str_with_line(l, value)?),
             x => return Err(FirewallError::UnknownOption(l, x.to_owned())),
         })
     }
@@ -73,6 +78,7 @@ impl FirewallOption {
             }
             FirewallOption::Source(ip_collection) => ip_collection.contains(fields.source),
             FirewallOption::Sport(port_collection) => port_collection.contains(fields.sport),
+            FirewallOption::LogLevel(_) => true,
         }
     }
 
@@ -84,6 +90,7 @@ impl FirewallOption {
             FirewallOption::Source(_) => FirewallOption::SOURCE,
             FirewallOption::Sport(_) => FirewallOption::SPORT,
             FirewallOption::IcmpType(_) => FirewallOption::ICMPTYPE,
+            FirewallOption::LogLevel(_) => FirewallOption::LOGLEVEL,
         }
     }
 }
@@ -96,7 +103,7 @@ mod tests {
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
-    use crate::{DataLink, Fields, FirewallError};
+    use crate::{DataLink, Fields, FirewallError, LogLevel};
 
     #[test]
     fn test_new_dest_option() {
@@ -201,6 +208,29 @@ mod tests {
     }
 
     #[test]
+    fn test_new_log_level_option() {
+        assert_eq!(
+            FirewallOption::new(3, "--log-level", "off").unwrap(),
+            FirewallOption::LogLevel(LogLevel::Off)
+        );
+
+        assert_eq!(
+            FirewallOption::new(3, "--log-level", "all").unwrap(),
+            FirewallOption::LogLevel(LogLevel::All)
+        );
+
+        assert_eq!(
+            FirewallOption::new(3, "--log-level", "console").unwrap(),
+            FirewallOption::LogLevel(LogLevel::Console)
+        );
+
+        assert_eq!(
+            FirewallOption::new(3, "--log-level", "db").unwrap(),
+            FirewallOption::LogLevel(LogLevel::Db)
+        );
+    }
+
+    #[test]
     fn test_not_existing_option() {
         let err = FirewallOption::new(11, "--not-exists", "8.8.8.8").unwrap_err();
         assert_eq!(
@@ -210,6 +240,11 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "Firewall error at line 11 - the specified option '--not-exists' doesn't exist"
+        );
+
+        assert_eq!(
+            FirewallOption::new(14, "--log", "ciao").unwrap_err(),
+            FirewallError::UnknownOption(14, "--log".to_owned())
         );
     }
 
@@ -279,6 +314,16 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "Firewall error at line 2 - incorrect value for option '--icmp-type -1'"
+        );
+    }
+
+    #[test]
+    fn test_invalid_log_level_option() {
+        let err = FirewallOption::new(17, "--log-level", "3").unwrap_err();
+        assert_eq!(err, FirewallError::InvalidLogLevelValue(17, "3".to_owned()));
+        assert_eq!(
+            err.to_string(),
+            "Firewall error at line 17 - incorrect value for option '--log-level 3'"
         );
     }
 
@@ -417,6 +462,35 @@ mod tests {
         assert!(!sport_opt_miss.matches_packet(&arp_packet_fields));
         assert!(!range_sport_opt.matches_packet(&arp_packet_fields));
         assert!(!range_sport_opt_miss.matches_packet(&arp_packet_fields));
+    }
+
+    #[test]
+    fn test_log_level_matches_packets() {
+        let off = FirewallOption::new(6, "--log-level", "off").unwrap();
+        let all = FirewallOption::new(7, "--log-level", "all").unwrap();
+        let console = FirewallOption::new(8, "--log-level", "console").unwrap();
+        let db = FirewallOption::new(6, "--log-level", "db").unwrap();
+
+        // tcp packet
+        let tcp_packet_fields = Fields::new(&TCP_PACKET, DataLink::Ethernet);
+        assert!(off.matches_packet(&tcp_packet_fields));
+        assert!(all.matches_packet(&tcp_packet_fields));
+        assert!(console.matches_packet(&tcp_packet_fields));
+        assert!(db.matches_packet(&tcp_packet_fields));
+
+        // icmp packet
+        let icmp_packet_fields = Fields::new(&ICMP_PACKET, DataLink::Ethernet);
+        assert!(off.matches_packet(&icmp_packet_fields));
+        assert!(all.matches_packet(&icmp_packet_fields));
+        assert!(console.matches_packet(&icmp_packet_fields));
+        assert!(db.matches_packet(&icmp_packet_fields));
+
+        // arp packet
+        let arp_packet_fields = Fields::new(&ARP_PACKET, DataLink::Ethernet);
+        assert!(off.matches_packet(&arp_packet_fields));
+        assert!(all.matches_packet(&arp_packet_fields));
+        assert!(console.matches_packet(&arp_packet_fields));
+        assert!(db.matches_packet(&arp_packet_fields));
     }
 
     #[test]

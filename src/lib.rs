@@ -42,6 +42,7 @@
 //!     list of port numbers, in which each entry can also represent a port range (using the `:` character).
 //!   * `--icmp-type`: ICMP message type; the value is expressed as a number representing
 //!     a specific message type (see [here](https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-types) for more info).
+//!   * `--log-level`: [logging strategy](`LogLevel`) to use for traffic matching the rule; possible values are `off`, `console`, `db`, `all`.
 //!   * `--proto`: Internet Protocol number; the value is expressed as a number representing
 //!     a specific protocol number (see [here](https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml#protocol-numbers-1) for more info).
 //!   * `--source`: source IP addresses; the value is expressed in the form of a comma-separated
@@ -54,14 +55,14 @@
 //! ``` text
 //! # Firewall rules (this is a comment line)
 //!
-//! IN REJECT --source 8.8.8.8
+//! IN REJECT --source 8.8.8.8 --log-level all
 //! # Rules marked with '+' have higher priority
 //! + IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
 //! OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
 //! OUT DENY
 //! ```
 //!
-//! In case of invalid firewall configurations, a [`FirewallError`] will be returned.
+//! In case of invalid firewall configurations, a [`FirewallError`] will be raised.
 //!
 //! # Usage
 //!
@@ -77,10 +78,10 @@
 //! // build the firewall from the rules in a file
 //! let firewall = Firewall::new("./samples/firewall.txt").unwrap();
 //!
-//! // here we suppose to have a packet to match against the firewall
+//! // here we suppose to have an incoming packet to match against the firewall
 //! let packet = [/* ... */];
 //!
-//! // determine action for packet, supposing incoming direction for packet
+//! // determine action for the packet
 //! let action = firewall.resolve_packet(&packet, FirewallDirection::IN);
 //!
 //! // act accordingly
@@ -111,6 +112,7 @@ pub use crate::firewall_action::FirewallAction;
 pub use crate::firewall_direction::FirewallDirection;
 pub use crate::firewall_error::FirewallError;
 use crate::firewall_rule::FirewallRule;
+pub use crate::log_level::LogLevel;
 use crate::logs::log_entry::LogEntry;
 use crate::logs::logger::log;
 
@@ -121,6 +123,7 @@ mod firewall_direction;
 mod firewall_error;
 mod firewall_option;
 mod firewall_rule;
+mod log_level;
 mod logs;
 mod utils;
 
@@ -136,7 +139,7 @@ pub struct Firewall {
     policy_out: FirewallAction,
     tx: Sender<LogEntry>,
     data_link: DataLink,
-    log: bool,
+    log_level: LogLevel,
 }
 
 impl Firewall {
@@ -185,7 +188,7 @@ impl Firewall {
             policy_out: FirewallAction::default(),
             tx,
             data_link: DataLink::default(),
-            log: true,
+            log_level: LogLevel::default(),
         };
 
         firewall.update_rules(file_path)?;
@@ -239,7 +242,7 @@ impl Firewall {
             return FirewallAction::ACCEPT;
         }
 
-        let mut action_opt = None;
+        let (mut action_opt, mut log_level_opt) = (None, None);
 
         // structure the packet as a set of relevant fields
         let fields = Fields::new(packet, self.data_link);
@@ -248,10 +251,10 @@ impl Firewall {
         for rule in &self.rules {
             if rule.matches_packet(&fields, &direction) {
                 if rule.quick {
-                    action_opt = Some(rule.action);
+                    (action_opt, log_level_opt) = rule.get_match_info();
                     break;
                 } else if action_opt.is_none() {
-                    action_opt = Some(rule.action);
+                    (action_opt, log_level_opt) = rule.get_match_info();
                 }
             }
         }
@@ -260,12 +263,12 @@ impl Firewall {
             FirewallDirection::IN => self.policy_in,
             FirewallDirection::OUT => self.policy_out,
         });
+        let log_level = log_level_opt.unwrap_or(self.log_level);
 
-        if self.log {
+        if log_level != LogLevel::Off {
             // send the log entry to the logger thread
-            let log_entry = LogEntry::new(&fields, direction, action);
             self.tx
-                .send(log_entry)
+                .send(LogEntry::new(&fields, direction, action, log_level))
                 .expect("the firewall logger routine aborted");
         }
 
@@ -434,26 +437,26 @@ impl Firewall {
         self.data_link = data_link;
     }
 
-    /// Enables or disables logging.
+    /// Changes the default logging strategy of the firewall.
     ///
-    /// If enabled (default) packets will be printed in stdout and will be logged into a DB.
+    /// By default packets are printed in stdout and are logged into a DB; this method allows to change this behaviour.
     ///
     /// # Arguments
     ///
-    /// * `log` - Whether the log activity should be enabled or not.
+    /// * `log_level` - Default logging strategy to use for the firewall.
     ///
     /// # Examples
     ///
     /// ```
-    /// use nullnet_firewall::{Firewall};
+    /// use nullnet_firewall::{Firewall, LogLevel};
     ///
     /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
     ///
     /// // disable logging
-    /// firewall.log(false);
+    /// firewall.log_level(LogLevel::Off);
     /// ```
-    pub fn log(&mut self, log: bool) {
-        self.log = log;
+    pub fn log_level(&mut self, log_level: LogLevel) {
+        self.log_level = log_level;
     }
 }
 
@@ -462,6 +465,7 @@ mod tests {
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
 
+    use crate::log_level::LogLevel;
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
@@ -488,7 +492,7 @@ mod tests {
             FirewallRule::new(7,"IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 9").unwrap(),
             FirewallRule::new(8,"IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 58 --icmp-type 8").unwrap(),
             FirewallRule::new(9,"OUT REJECT").unwrap(),
-            FirewallRule::new(10,"IN ACCEPT").unwrap(),
+            FirewallRule::new(10,"IN ACCEPT --log-level console").unwrap(),
         ];
 
         let mut firewall_from_file = Firewall::new(TEST_FILE_1).unwrap();
@@ -762,7 +766,7 @@ mod tests {
             policy_out: Default::default(),
             tx,
             data_link: Default::default(),
-            log: true,
+            log_level: LogLevel::All,
         };
 
         let rules_1 = vec![
@@ -917,7 +921,7 @@ mod tests {
             FirewallRule::new(7,"IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 9").unwrap(),
             FirewallRule::new(8,"IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 58 --icmp-type 8").unwrap(),
             FirewallRule::new(9,"OUT REJECT").unwrap(),
-            FirewallRule::new(10,"IN ACCEPT").unwrap(),
+            FirewallRule::new(10,"IN ACCEPT --log-level console").unwrap(),
         ];
 
         let rules_after_update = vec![
@@ -925,7 +929,7 @@ mod tests {
             FirewallRule::new(2,"+ OUT ACCEPT --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --sport 545:560,43,53").unwrap(),
             FirewallRule::new(3,"OUT DENY --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --proto 17 --sport 545:560,43,53 --dport 2396").unwrap(),
             FirewallRule::new(4,"OUT REJECT --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --proto 17 --sport 545:560,43,53 --dport 2395").unwrap(),
-            FirewallRule::new(5,"IN DENY --sport 40:49,53").unwrap(),
+            FirewallRule::new(5,"IN DENY --log-level db --sport 40:49,53").unwrap(),
             FirewallRule::new(6,"IN REJECT --sport 40:49,53 --source 3ffe:501:4819::41,3ffe:501:4819::42").unwrap(),
         ];
 
@@ -945,13 +949,17 @@ mod tests {
     }
 
     #[test]
-    fn test_log_disable() {
+    fn test_set_log_level() {
         let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
-        assert!(firewall.log);
-        firewall.log(false);
-        assert!(!firewall.log);
-        firewall.log(true);
-        assert!(firewall.log);
+        assert_eq!(firewall.log_level, LogLevel::All);
+        firewall.log_level(LogLevel::Db);
+        assert_eq!(firewall.log_level, LogLevel::Db);
+        firewall.log_level(LogLevel::Console);
+        assert_eq!(firewall.log_level, LogLevel::Console);
+        firewall.log_level(LogLevel::Off);
+        assert_eq!(firewall.log_level, LogLevel::Off);
+        firewall.log_level(LogLevel::All);
+        assert_eq!(firewall.log_level, LogLevel::All);
     }
 
     #[test]
@@ -1141,6 +1149,21 @@ mod tests {
     fn test_file_error_not_applicable_icmp_type() {
         let path = &get_error_file_path("not_applicable_icmp_type");
         let expected = String::from("Firewall error at line 6 - option '--icmp-type' is valid only if '--proto 1' or '--proto 58' is also specified");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
+
+    #[test]
+    fn test_file_error_invalid_log_level() {
+        let path = &get_error_file_path("invalid_log_level");
+        let expected =
+            String::from("Firewall error at line 4 - incorrect value for option '--log-level DB'");
 
         assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
 

@@ -13,5 +13,5 @@ IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1       --proto       1 --icmp-type 8
 IN ACCEPT --source 2.1.1.2 --dest  2.1.1.1 --proto 1 --icmp-type 9
 IN   ACCEPT   --source   2.1.1.2   --dest 2.1.1.1 --proto 58 --icmp-type 8
     OUT      REJECT
- IN ACCEPT
+ IN ACCEPT --log-level console
         # IN REJECT
