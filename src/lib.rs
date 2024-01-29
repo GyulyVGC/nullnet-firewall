@@ -187,7 +187,7 @@ impl Firewall {
             policy_out: FirewallAction::default(),
             tx,
             data_link: DataLink::default(),
-            log_level: LogLevel::All,
+            log_level: LogLevel::default(),
         };
 
         firewall.update_rules(file_path)?;

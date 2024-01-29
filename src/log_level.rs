@@ -1,10 +1,11 @@
 use crate::FirewallError;
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
 pub enum LogLevel {
     Off,
     Db,
     Console,
+    #[default]
     All,
 }
 

@@ -119,6 +119,10 @@ impl FirewallRule {
 
         Ok(())
     }
+
+    pub(crate) fn get_match_info(&self) -> (FirewallAction, Option<LogLevel>) {
+        (self.action, self.log_level)
+    }
 }
 
 #[cfg(test)]
@@ -144,8 +148,10 @@ mod tests {
             }
         );
 
+        let rule2 = FirewallRule::new(1, "IN DENY --dest 8.8.8.8-8.8.8.10").unwrap();
+        assert_eq!(rule2.get_match_info(), (FirewallAction::DENY, None));
         assert_eq!(
-            FirewallRule::new(1, "IN DENY --dest 8.8.8.8-8.8.8.10").unwrap(),
+            rule2,
             FirewallRule {
                 direction: FirewallDirection::IN,
                 action: FirewallAction::DENY,
@@ -542,11 +548,16 @@ mod tests {
 
     #[test]
     fn test_new_log_level_rules() {
+        let rule1 = FirewallRule::new(11, "IN REJECT --log-level off").unwrap();
         assert_eq!(
-            FirewallRule::new(11, "IN DENY --log-level off").unwrap(),
+            rule1.get_match_info(),
+            (FirewallAction::REJECT, Some(LogLevel::Off))
+        );
+        assert_eq!(
+            rule1,
             FirewallRule {
                 direction: FirewallDirection::IN,
-                action: FirewallAction::DENY,
+                action: FirewallAction::REJECT,
                 options: vec![],
                 quick: false,
                 log_level: Some(LogLevel::Off),
