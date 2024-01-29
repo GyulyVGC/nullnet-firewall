@@ -1161,4 +1161,18 @@ mod tests {
             expected
         );
     }
+
+    #[test]
+    fn test_file_error_invalid_log_level() {
+        let path = &get_error_file_path("invalid_log_level");
+        let expected = String::from("Firewall error at line 4 - incorrect log level 'DB'");
+
+        assert_eq!(Firewall::new(path).unwrap_err().to_string(), expected);
+
+        let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
+        assert_eq!(
+            firewall.update_rules(path).unwrap_err().to_string(),
+            expected
+        );
+    }
 }
