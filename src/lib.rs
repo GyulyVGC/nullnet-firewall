@@ -241,8 +241,7 @@ impl Firewall {
             return FirewallAction::ACCEPT;
         }
 
-        let mut action_opt = None;
-        let mut log_level_opt = None;
+        let (mut action_opt, mut log_level_opt) = (None, None);
 
         // structure the packet as a set of relevant fields
         let fields = Fields::new(packet, self.data_link);
@@ -251,12 +250,10 @@ impl Firewall {
         for rule in &self.rules {
             if rule.matches_packet(&fields, &direction) {
                 if rule.quick {
-                    action_opt = Some(rule.action);
-                    log_level_opt = rule.log_level;
+                    (action_opt, log_level_opt) = rule.get_match_info();
                     break;
                 } else if action_opt.is_none() {
-                    action_opt = Some(rule.action);
-                    log_level_opt = rule.log_level;
+                    (action_opt, log_level_opt) = rule.get_match_info();
                 }
             }
         }
@@ -269,9 +266,8 @@ impl Firewall {
 
         if log_level != LogLevel::Off {
             // send the log entry to the logger thread
-            let log_entry = LogEntry::new(&fields, direction, action, log_level);
             self.tx
-                .send(log_entry)
+                .send(LogEntry::new(&fields, direction, action, log_level))
                 .expect("the firewall logger routine aborted");
         }
 
