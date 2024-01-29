@@ -17,12 +17,12 @@ pub enum FirewallError {
     InvalidIcmpTypeValue(usize, String),
     /// The value supplied for the option `--proto` is invalid.
     InvalidProtocolValue(usize, String),
+    /// An invalid log level has been specified for a firewall rule.
+    InvalidLogLevelValue(usize, String),
     /// An invalid direction has been specified for a firewall rule.
     InvalidDirection(usize, String),
     /// An invalid action has been specified for a firewall rule.
     InvalidAction(usize, String),
-    /// An invalid log level has been specified for a firewall rule.
-    InvalidLogLevel(usize, String),
     /// An unknown option has been specified for a firewall rule.
     UnknownOption(usize, String),
     /// An empty option has been specified for a firewall rule.
@@ -80,6 +80,13 @@ impl Display for FirewallError {
                     FirewallOption::PROTO
                 ),
             ),
+            FirewallError::InvalidLogLevelValue(l, val) => (
+                l,
+                format!(
+                    "incorrect value for option '{} {val}'",
+                    FirewallOption::LOGLEVEL
+                ),
+            ),
             FirewallError::InvalidDirection(l, direction) => {
                 (l, format!("incorrect direction '{direction}'"))
             }
@@ -105,9 +112,6 @@ impl Display for FirewallError {
                     FirewallOption::PROTO
                 ),
             ),
-            FirewallError::InvalidLogLevel(l, log_level) => {
-                (l, format!("incorrect log level '{log_level}'"))
-            }
         };
 
         write!(f, "Firewall error at line {l} - {err_info}")
