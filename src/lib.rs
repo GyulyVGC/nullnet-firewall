@@ -111,9 +111,9 @@ pub use crate::firewall_action::FirewallAction;
 pub use crate::firewall_direction::FirewallDirection;
 pub use crate::firewall_error::FirewallError;
 use crate::firewall_rule::FirewallRule;
+pub use crate::log_level::LogLevel;
 use crate::logs::log_entry::LogEntry;
 use crate::logs::logger::log;
-use crate::utils::log_level::LogLevel;
 
 mod data_link;
 mod fields;
@@ -122,6 +122,7 @@ mod firewall_direction;
 mod firewall_error;
 mod firewall_option;
 mod firewall_rule;
+mod log_level;
 mod logs;
 mod utils;
 
@@ -450,12 +451,12 @@ impl Firewall {
     /// # Examples
     ///
     /// ```
-    /// use nullnet_firewall::{Firewall};
+    /// use nullnet_firewall::{Firewall, LogLevel};
     ///
     /// let mut firewall = Firewall::new("./samples/firewall.txt").unwrap();
     ///
     /// // disable logging
-    /// firewall.log(false);
+    /// firewall.log_level(LogLevel::Off);
     /// ```
     pub fn log_level(&mut self, log_level: LogLevel) {
         self.log_level = log_level;
@@ -467,6 +468,7 @@ mod tests {
     use std::sync::mpsc;
     use std::sync::mpsc::{Receiver, Sender};
 
+    use crate::log_level::LogLevel;
     use crate::utils::raw_packets::test_packets::{
         ARP_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
@@ -767,7 +769,7 @@ mod tests {
             policy_out: Default::default(),
             tx,
             data_link: Default::default(),
-            log: true,
+            log_level: LogLevel::All,
         };
 
         let rules_1 = vec![
@@ -950,13 +952,17 @@ mod tests {
     }
 
     #[test]
-    fn test_log_disable() {
+    fn test_log_level() {
         let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
-        assert!(firewall.log);
-        firewall.log(false);
-        assert!(!firewall.log);
-        firewall.log(true);
-        assert!(firewall.log);
+        assert_eq!(firewall.log_level, LogLevel::All);
+        firewall.log_level(LogLevel::Db);
+        assert_eq!(firewall.log_level, LogLevel::Db);
+        firewall.log_level(LogLevel::Console);
+        assert_eq!(firewall.log_level, LogLevel::Console);
+        firewall.log_level(LogLevel::Off);
+        assert_eq!(firewall.log_level, LogLevel::Off);
+        firewall.log_level(LogLevel::All);
+        assert_eq!(firewall.log_level, LogLevel::All);
     }
 
     #[test]

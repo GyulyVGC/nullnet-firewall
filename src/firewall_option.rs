@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
+use crate::log_level::LogLevel;
 use crate::utils::ip_collection::IpCollection;
-use crate::utils::log_level::LogLevel;
 use crate::utils::port_collection::PortCollection;
 use crate::{Fields, FirewallError};
 

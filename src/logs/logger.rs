@@ -2,7 +2,7 @@ use std::sync::mpsc::Receiver;
 
 use rusqlite::Connection;
 
-use crate::utils::log_level::LogLevel;
+use crate::log_level::LogLevel;
 use crate::LogEntry;
 
 struct Logger {
@@ -102,6 +102,7 @@ mod tests {
     use rusqlite::Connection;
     use serial_test::serial;
 
+    use crate::log_level::LogLevel;
     use crate::logs::logger::{Logger, SQLITE_PATH};
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
     use crate::{DataLink, Fields, FirewallAction, FirewallDirection, FirewallError, LogEntry};
@@ -166,6 +167,7 @@ mod tests {
                     proto: row.get(4).unwrap(),
                     icmp_type: row.get(9).unwrap(),
                     size: row.get(10).unwrap(),
+                    log_level: LogLevel::All,
                 })
             })
             .unwrap();
@@ -193,16 +195,19 @@ mod tests {
             &Fields::new(&TCP_PACKET, DataLink::Ethernet),
             FirewallDirection::IN,
             FirewallAction::DENY,
+            LogLevel::All,
         );
         let icmpv6_entry = LogEntry::new(
             &Fields::new(&ICMPV6_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::ACCEPT,
+            LogLevel::All,
         );
         let arp_entry = LogEntry::new(
             &Fields::new(&ARP_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::REJECT,
+            LogLevel::All,
         );
 
         logger.add_entry(tcp_entry.clone());
@@ -232,16 +237,19 @@ mod tests {
             &Fields::new(&TCP_PACKET, DataLink::Ethernet),
             FirewallDirection::IN,
             FirewallAction::DENY,
+            LogLevel::All,
         );
         let icmpv6_entry = LogEntry::new(
             &Fields::new(&ICMPV6_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::ACCEPT,
+            LogLevel::All,
         );
         let arp_entry = LogEntry::new(
             &Fields::new(&ARP_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::REJECT,
+            LogLevel::All,
         );
 
         logger.add_entry(tcp_entry.clone());

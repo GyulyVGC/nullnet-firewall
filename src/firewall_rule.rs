@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::firewall_option::FirewallOption;
-use crate::utils::log_level::LogLevel;
+use crate::log_level::LogLevel;
 use crate::{Fields, FirewallAction, FirewallDirection, FirewallError};
 
 /// A firewall rule
@@ -134,7 +134,8 @@ mod tests {
                 direction: FirewallDirection::OUT,
                 action: FirewallAction::REJECT,
                 options: vec![],
-                quick: false
+                quick: false,
+                log_level: None,
             }
         );
 
@@ -146,7 +147,8 @@ mod tests {
                 options: vec![FirewallOption::Dest(
                     IpCollection::new(1, FirewallOption::SOURCE, "8.8.8.8-8.8.8.10").unwrap()
                 )],
-                quick: false
+                quick: false,
+                log_level: None,
             }
         );
 
@@ -167,7 +169,8 @@ mod tests {
                         PortCollection::new(1, FirewallOption::DPORT, "900:1000,1,2,3").unwrap()
                     )
                 ],
-                quick: false
+                quick: false,
+                log_level: None,
             }
         );
 
@@ -182,7 +185,8 @@ mod tests {
                     FirewallOption::IcmpType(8),
                     FirewallOption::Proto(1)
                 ],
-                quick: false
+                quick: false,
+                log_level: None,
             }
         );
 
@@ -205,7 +209,8 @@ mod tests {
                     FirewallOption::IcmpType(1),
                     FirewallOption::Proto(58)
                 ],
-                quick: false
+                quick: false,
+                log_level: None,
             }
         );
     }
@@ -489,7 +494,8 @@ mod tests {
                 options: vec![FirewallOption::Dest(
                     IpCollection::new(11, FirewallOption::SOURCE, "8.8.8.8-8.8.8.10").unwrap()
                 )],
-                quick: true
+                quick: true,
+                log_level: None,
             }
         );
 
@@ -501,7 +507,8 @@ mod tests {
                 options: vec![FirewallOption::Dest(
                     IpCollection::new(12, FirewallOption::SOURCE, "8.8.8.8-8.8.8.10").unwrap()
                 )],
-                quick: true
+                quick: true,
+                log_level: None,
             }
         );
 
