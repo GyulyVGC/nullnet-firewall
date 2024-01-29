@@ -42,6 +42,7 @@
 //!     list of port numbers, in which each entry can also represent a port range (using the `:` character).
 //!   * `--icmp-type`: ICMP message type; the value is expressed as a number representing
 //!     a specific message type (see [here](https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-types) for more info).
+//!   * `--log-level`: [logging strategy](`LogLevel`) to use for traffic matching the rule; possible values are `off`, `console`, `db`, `all`.
 //!   * `--proto`: Internet Protocol number; the value is expressed as a number representing
 //!     a specific protocol number (see [here](https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml#protocol-numbers-1) for more info).
 //!   * `--source`: source IP addresses; the value is expressed in the form of a comma-separated
@@ -54,14 +55,14 @@
 //! ``` text
 //! # Firewall rules (this is a comment line)
 //!
-//! IN REJECT --source 8.8.8.8
+//! IN REJECT --source 8.8.8.8 --log-level all
 //! # Rules marked with '+' have higher priority
 //! + IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
 //! OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
 //! OUT DENY
 //! ```
 //!
-//! In case of invalid firewall configurations, a [`FirewallError`] will be returned.
+//! In case of invalid firewall configurations, a [`FirewallError`] will be raised.
 //!
 //! # Usage
 //!
@@ -77,10 +78,10 @@
 //! // build the firewall from the rules in a file
 //! let firewall = Firewall::new("./samples/firewall.txt").unwrap();
 //!
-//! // here we suppose to have a packet to match against the firewall
+//! // here we suppose to have an incoming packet to match against the firewall
 //! let packet = [/* ... */];
 //!
-//! // determine action for packet, supposing incoming direction for packet
+//! // determine action for the packet
 //! let action = firewall.resolve_packet(&packet, FirewallDirection::IN);
 //!
 //! // act accordingly
@@ -436,13 +437,13 @@ impl Firewall {
         self.data_link = data_link;
     }
 
-    /// Enables or disables logging.
+    /// Changes the default logging strategy of the firewall.
     ///
-    /// If enabled (default) packets will be printed in stdout and will be logged into a DB.
+    /// By default packets are printed in stdout and are logged into a DB; this method allows to change this behaviour.
     ///
     /// # Arguments
     ///
-    /// * `log` - Whether the log activity should be enabled or not.
+    /// * `log_level` - Default logging strategy to use for the firewall.
     ///
     /// # Examples
     ///

@@ -17,7 +17,7 @@ pub enum FirewallError {
     InvalidIcmpTypeValue(usize, String),
     /// The value supplied for the option `--proto` is invalid.
     InvalidProtocolValue(usize, String),
-    /// An invalid log level has been specified for a firewall rule.
+    /// The value supplied for the option `--log-level` is invalid.
     InvalidLogLevelValue(usize, String),
     /// An invalid direction has been specified for a firewall rule.
     InvalidDirection(usize, String),

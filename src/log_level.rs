@@ -1,10 +1,18 @@
 use crate::FirewallError;
 
+/// Logging strategy to use.
+///
+/// It can be set either for specific firewall rules via the `--log-level` option
+/// or globally for the firewall.
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
 pub enum LogLevel {
+    /// Traffic won't be logged at all.
     Off,
+    /// Traffic will be logged into a database.
     Db,
+    /// Traffic will be logged in standard output.
     Console,
+    /// Traffic will be logged both in a database and in standard output.
     #[default]
     All,
 }
