@@ -491,7 +491,7 @@ mod tests {
             FirewallRule::new(7,"IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 9").unwrap(),
             FirewallRule::new(8,"IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 58 --icmp-type 8").unwrap(),
             FirewallRule::new(9,"OUT REJECT").unwrap(),
-            FirewallRule::new(10,"IN ACCEPT").unwrap(),
+            FirewallRule::new(10,"IN ACCEPT --log-level console").unwrap(),
         ];
 
         let mut firewall_from_file = Firewall::new(TEST_FILE_1).unwrap();
@@ -920,7 +920,7 @@ mod tests {
             FirewallRule::new(7,"IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 1 --icmp-type 9").unwrap(),
             FirewallRule::new(8,"IN ACCEPT --source 2.1.1.2 --dest 2.1.1.1 --proto 58 --icmp-type 8").unwrap(),
             FirewallRule::new(9,"OUT REJECT").unwrap(),
-            FirewallRule::new(10,"IN ACCEPT").unwrap(),
+            FirewallRule::new(10,"IN ACCEPT --log-level console").unwrap(),
         ];
 
         let rules_after_update = vec![
@@ -928,7 +928,7 @@ mod tests {
             FirewallRule::new(2,"+ OUT ACCEPT --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --sport 545:560,43,53").unwrap(),
             FirewallRule::new(3,"OUT DENY --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --proto 17 --sport 545:560,43,53 --dport 2396").unwrap(),
             FirewallRule::new(4,"OUT REJECT --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --proto 17 --sport 545:560,43,53 --dport 2395").unwrap(),
-            FirewallRule::new(5,"IN DENY --sport 40:49,53").unwrap(),
+            FirewallRule::new(5,"IN DENY --log-level db --sport 40:49,53").unwrap(),
             FirewallRule::new(6,"IN REJECT --sport 40:49,53 --source 3ffe:501:4819::41,3ffe:501:4819::42").unwrap(),
         ];
 
@@ -948,7 +948,7 @@ mod tests {
     }
 
     #[test]
-    fn test_log_level() {
+    fn test_set_log_level() {
         let mut firewall = Firewall::new(TEST_FILE_1).unwrap();
         assert_eq!(firewall.log_level, LogLevel::All);
         firewall.log_level(LogLevel::Db);
