@@ -1,6 +1,6 @@
-OUT REJECT --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --sport 545:560,43,53
+OUT REJECT --log-level console --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --sport 545:560,43,53
 + OUT ACCEPT --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --sport 545:560,43,53
 OUT DENY --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --proto 17 --sport 545:560,43,53 --dport 2396
-OUT REJECT --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --proto 17 --sport 545:560,43,53 --dport 2395
-IN DENY --log-level db --sport 40:49,53
+OUT REJECT --dest 3ffe:507:0:1:200:86ff:fe05:800-3ffe:507:0:1:200:86ff:fe05:08dd --proto 17 --log-level DB --sport 545:560,43,53 --dport 2395
+IN DENY --sport 40:49,53
 IN REJECT --sport 40:49,53 --source 3ffe:501:4819::41,3ffe:501:4819::42
