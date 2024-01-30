@@ -47,6 +47,7 @@ associated with the rule.
     list of port numbers, in which each entry can also represent a port range (using the `:` character).
   * `--icmp-type`: ICMP message type; the value is expressed as a number representing
     a specific message type (see [here](https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-types) for more info).
+  * `--log-level`: logging strategy to use for traffic matching the rule; possible values are `off`, `console`, `db`, `all`.
   * `--proto`: Internet Protocol number; the value is expressed as a number representing
     a specific protocol number (see [here](https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml#protocol-numbers-1) for more info).
   * `--source`: source IP addresses; the value is expressed in the form of a comma-separated
@@ -59,7 +60,7 @@ A **sample** firewall configuration file is reported in the following:
 ``` text
 # Firewall rules (this is a comment line)
 
-IN REJECT --source 8.8.8.8
+IN REJECT --source 8.8.8.8 --log-level off
 # Rules marked with '+' have higher priority
 + IN ACCEPT --source 8.8.8.0-8.8.8.10 --sport 8
 OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3
