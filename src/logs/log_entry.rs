@@ -6,7 +6,7 @@ use crate::logs::log_timestamp::LogTimestamp;
 use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct LogEntry {
     pub(crate) timestamp: LogTimestamp,
     pub(crate) direction: FirewallDirection,
@@ -60,6 +60,35 @@ impl Display for LogEntry {
             format_icmp_type(self.icmp_type),
             self.size,
         )
+    }
+}
+
+impl PartialEq for LogEntry {
+    fn eq(&self, other: &Self) -> bool {
+        let LogEntry {
+            timestamp,
+            direction,
+            action,
+            source,
+            dest,
+            sport,
+            dport,
+            proto,
+            icmp_type,
+            size,
+            log_level: _,
+        } = self;
+
+        timestamp.to_string() == other.timestamp.to_string()
+            && direction == &other.direction
+            && action == &other.action
+            && source == &other.source
+            && dest == &other.dest
+            && sport == &other.sport
+            && dport == &other.dport
+            && proto == &other.proto
+            && icmp_type == &other.icmp_type
+            && size == &other.size
     }
 }
 
@@ -175,7 +204,7 @@ mod tests {
 
     #[test]
     fn test_log_entry_display() {
-        let timestamp_len = chrono::offset::Local::now().to_string().len();
+        let timestamp_len = 25;
 
         // tcp packet
         let log_entry_tcp = LogEntry::new(

@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Local, SecondsFormat};
 use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 
@@ -34,7 +34,11 @@ impl FromSql for LogTimestamp {
 
 impl Display for LogTimestamp {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.timestamp)
+        write!(
+            f,
+            "{}",
+            self.timestamp.to_rfc3339_opts(SecondsFormat::Secs, false)
+        )
     }
 }
 
@@ -58,9 +62,10 @@ mod tests {
     #[test]
     fn test_log_timestamp_to_sql() {
         let time = chrono::offset::Local::now();
+        let log_timestamp = LogTimestamp { timestamp: time };
         assert_eq!(
-            LogTimestamp::to_sql(&LogTimestamp { timestamp: time }),
-            Ok(ToSqlOutput::Owned(Text(time.to_string())))
+            LogTimestamp::to_sql(&log_timestamp),
+            Ok(ToSqlOutput::Owned(Text(log_timestamp.to_string())))
         );
     }
 }

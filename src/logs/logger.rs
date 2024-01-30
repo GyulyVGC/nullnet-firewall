@@ -244,19 +244,19 @@ mod tests {
         drop_table(&logger);
         logger.create_table();
 
-        let mut tcp_entry = LogEntry::new(
+        let tcp_entry = LogEntry::new(
             &Fields::new(&TCP_PACKET, DataLink::Ethernet),
             FirewallDirection::IN,
             FirewallAction::DENY,
             LogLevel::Db,
         );
-        let mut icmpv6_entry = LogEntry::new(
+        let icmpv6_entry = LogEntry::new(
             &Fields::new(&ICMPV6_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::ACCEPT,
             LogLevel::Db,
         );
-        let mut arp_entry = LogEntry::new(
+        let arp_entry = LogEntry::new(
             &Fields::new(&ARP_PACKET, DataLink::Ethernet),
             FirewallDirection::OUT,
             FirewallAction::REJECT,
@@ -269,10 +269,6 @@ mod tests {
 
         assert_eq!(logger.console_entries, 0);
         let packets = retrieve_all_packets(&logger);
-        // skip equality checks on log level as entries on the DB don't have this info...
-        tcp_entry.log_level = LogLevel::All;
-        icmpv6_entry.log_level = LogLevel::All;
-        arp_entry.log_level = LogLevel::All;
         assert_eq!(packets.len(), 3);
         assert_eq!(*packets.get(0).unwrap(), tcp_entry);
         assert_eq!(*packets.get(1).unwrap(), icmpv6_entry);
