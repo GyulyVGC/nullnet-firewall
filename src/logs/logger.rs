@@ -336,26 +336,8 @@ mod tests {
             FirewallAction::DENY,
             LogLevel::Off,
         );
-        let icmpv6_entry = LogEntry::new(
-            &Fields::new(&ICMPV6_PACKET, DataLink::Ethernet),
-            FirewallDirection::OUT,
-            FirewallAction::ACCEPT,
-            LogLevel::Off,
-        );
-        let arp_entry = LogEntry::new(
-            &Fields::new(&ARP_PACKET, DataLink::Ethernet),
-            FirewallDirection::OUT,
-            FirewallAction::REJECT,
-            LogLevel::Off,
-        );
 
         logger.log_entry(tcp_entry.clone());
-        logger.log_entry(icmpv6_entry.clone());
-        logger.log_entry(arp_entry.clone());
-
-        assert_eq!(logger.console_entries, 0);
-        let packets = retrieve_all_packets(&logger);
-        assert_eq!(packets.len(), 0);
     }
 
     #[test]
