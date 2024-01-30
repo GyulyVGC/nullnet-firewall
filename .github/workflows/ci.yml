@@ -14,36 +14,35 @@ env:
 # Linters inspired from here: https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
 jobs:
 
-  Linux:
-    name: Linux (fmt, build, clippy, test)
-    runs-on: ubuntu-latest
+  rust:
+    name: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu
+          - os: macos
+          - os: windows
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - name: Install libpcap
+          components: rustfmt, clippy
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu'
         run: sudo apt-get install libpcap-dev
-      - name: install fmt
-        run: rustup component add rustfmt
-      - name: install clippy
-        run: rustup component add clippy
+
       - name: fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
       - name: build
         run: cargo build --verbose
       - name: clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
+        run: cargo clippy -- -D warnings
       - name: test
-        run: cargo test --verbose
+        run: cargo test --verbose -- --nocapture
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
