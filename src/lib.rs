@@ -165,23 +165,7 @@ impl Firewall {
     /// let firewall = Firewall::new();
     #[must_use]
     pub fn new() -> Self {
-        let (tx, rx): (Sender<LogEntry>, Receiver<LogEntry>) = mpsc::channel();
-        thread::Builder::new()
-            .name("logger".to_string())
-            .spawn(move || {
-                log(&rx);
-            })
-            .unwrap();
-
-        Firewall {
-            rules: Vec::new(),
-            enabled: true,
-            policy_in: FirewallAction::default(),
-            policy_out: FirewallAction::default(),
-            tx,
-            data_link: DataLink::default(),
-            log_level: LogLevel::default(),
-        }
+        Self::default()
     }
 
     /// Returns the action to be taken for a supplied network packet,
@@ -453,7 +437,23 @@ impl Firewall {
 
 impl Default for Firewall {
     fn default() -> Self {
-        Self::new()
+        let (tx, rx): (Sender<LogEntry>, Receiver<LogEntry>) = mpsc::channel();
+        thread::Builder::new()
+            .name("logger".to_string())
+            .spawn(move || {
+                log(&rx);
+            })
+            .unwrap();
+
+        Firewall {
+            rules: Vec::new(),
+            enabled: true,
+            policy_in: FirewallAction::default(),
+            policy_out: FirewallAction::default(),
+            tx,
+            data_link: DataLink::default(),
+            log_level: LogLevel::default(),
+        }
     }
 }
 
