@@ -134,7 +134,6 @@ mod utils;
 /// the action to be taken for a given network packet.
 ///
 /// A new `Firewall` can be created from a textual file listing a set of rules.
-#[derive(Debug)]
 pub struct Firewall {
     rules: Vec<FirewallRule>,
     enabled: bool,
