@@ -1,5 +1,6 @@
-use etherparse::IpNumber;
 use std::fmt::{Display, Formatter};
+
+use etherparse::IpNumber;
 
 use crate::log_level::LogLevel;
 use crate::logs::log_ip::LogIp;
