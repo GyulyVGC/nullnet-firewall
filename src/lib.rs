@@ -109,7 +109,7 @@ use std::thread;
 
 pub use crate::data_link::DataLink;
 use crate::fields::fields::Fields;
-use crate::fields::ip_header::{get_dest, get_proto, get_source};
+use crate::fields::net_header::{get_dest, get_proto, get_source};
 use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
 pub use crate::firewall_action::FirewallAction;
 pub use crate::firewall_direction::FirewallDirection;
