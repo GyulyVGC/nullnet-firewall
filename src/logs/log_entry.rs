@@ -1,9 +1,9 @@
+use etherparse::IpNumber;
 use std::fmt::{Display, Formatter};
 
 use crate::log_level::LogLevel;
 use crate::logs::log_ip::LogIp;
 use crate::logs::log_timestamp::LogTimestamp;
-use crate::utils::proto::Proto;
 use crate::{Fields, FirewallAction, FirewallDirection};
 
 #[derive(Debug, Clone)]
@@ -52,7 +52,7 @@ impl Display for LogEntry {
             self.timestamp,
             self.direction,
             self.action,
-            Proto::from_number(self.proto),
+            format_proto(self.proto),
             format_addr(&self.source),
             format_addr(&self.dest),
             format_port(self.sport),
@@ -60,35 +60,6 @@ impl Display for LogEntry {
             format_icmp_type(self.icmp_type),
             self.size,
         )
-    }
-}
-
-impl PartialEq for LogEntry {
-    fn eq(&self, other: &Self) -> bool {
-        let LogEntry {
-            timestamp,
-            direction,
-            action,
-            source,
-            dest,
-            sport,
-            dport,
-            proto,
-            icmp_type,
-            size,
-            log_level: _,
-        } = self;
-
-        timestamp.to_string() == other.timestamp.to_string()
-            && direction == &other.direction
-            && action == &other.action
-            && source == &other.source
-            && dest == &other.dest
-            && sport == &other.sport
-            && dport == &other.dport
-            && proto == &other.proto
-            && icmp_type == &other.icmp_type
-            && size == &other.size
     }
 }
 
@@ -103,6 +74,14 @@ fn format_addr(addr: &Option<LogIp>) -> String {
 fn format_port(port: Option<u16>) -> String {
     if let Some(p) = port {
         p.to_string()
+    } else {
+        "-".to_string()
+    }
+}
+
+fn format_proto(proto: Option<u8>) -> String {
+    if let Some(p) = proto {
+        IpNumber(p).keyword_str().unwrap_or("-").to_string()
     } else {
         "-".to_string()
     }
@@ -125,6 +104,35 @@ mod tests {
     use crate::logs::log_ip::LogIp;
     use crate::utils::raw_packets::test_packets::{ARP_PACKET, ICMPV6_PACKET, TCP_PACKET};
     use crate::{DataLink, Fields, FirewallAction, FirewallDirection, LogEntry};
+
+    impl PartialEq for LogEntry {
+        fn eq(&self, other: &Self) -> bool {
+            let LogEntry {
+                timestamp,
+                direction,
+                action,
+                source,
+                dest,
+                sport,
+                dport,
+                proto,
+                icmp_type,
+                size,
+                log_level: _,
+            } = self;
+
+            timestamp.to_string() == other.timestamp.to_string()
+                && direction == &other.direction
+                && action == &other.action
+                && source == &other.source
+                && dest == &other.dest
+                && sport == &other.sport
+                && dport == &other.dport
+                && proto == &other.proto
+                && icmp_type == &other.icmp_type
+                && size == &other.size
+        }
+    }
 
     #[test]
     fn test_log_entry_new() {
