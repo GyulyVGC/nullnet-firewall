@@ -17,20 +17,20 @@ pub(crate) struct Fields {
 
 impl Fields {
     pub(crate) fn new(packet: &[u8], data_link: DataLink) -> Fields {
-        let slice_function = match data_link {
-            DataLink::Ethernet => PacketHeaders::from_ethernet_slice,
-            DataLink::RawIP => PacketHeaders::from_ip_slice,
+        let headers_result = match data_link {
+            DataLink::Ethernet => PacketHeaders::from_ethernet_slice(packet),
+            DataLink::RawIP => PacketHeaders::from_ip_slice(packet),
         };
 
-        if let Ok(headers) = slice_function(packet) {
-            let ip_header = headers.ip;
+        if let Ok(headers) = headers_result {
+            let net_header = headers.net;
             let transport_header = headers.transport;
             Fields {
-                source: get_source(&ip_header),
-                dest: get_dest(&ip_header),
+                source: get_source(&net_header),
+                dest: get_dest(&net_header),
                 sport: get_sport(&transport_header),
                 dport: get_dport(&transport_header),
-                proto: get_proto(&ip_header),
+                proto: get_proto(&net_header),
                 icmp_type: get_icmp_type(&transport_header),
                 size: packet.len(),
             }
