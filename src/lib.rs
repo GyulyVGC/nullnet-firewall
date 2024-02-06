@@ -69,7 +69,7 @@
 //! # Usage
 //!
 //! Once a [`Firewall`] has been defined, it can be used to determine which action to take for each
-//! of the netwrok packets in transit.
+//! of the network packets in transit.
 //!
 //! This is done by invoking [`Firewall::resolve_packet`], which will answer with the
 //! action to take for the supplied packet.

@@ -23,9 +23,12 @@ to be used at the level of *network drivers*.
 Each of the packets passed to the firewall will be logged both in standard output
 and in a `SQLite` database with path `./log.sqlite`.
 
-## Firewall rules definition
+## Firewall definition
 
-A new `Firewall` object is defined as a set of rules specified in a textual file.
+A new `Firewall` object is instantiated via the `Firewall::new` method.
+
+The newly created firewall can be configured via `Firewall::set_rules`, which accepts as parameter
+the path of a file defining a collection of firewall rules.
 
 Each of the **rules** defined in the file is placed on a new line and has the following structure:
 ``` txt
@@ -72,7 +75,7 @@ In case of invalid firewall configurations, a specific `FirewallError` will be r
 ## Usage
 
 A defined `Firewall` object can be used to determine which action to take for each
-of the netwrok packets in transit.
+of the network packets in transit.
 
 This is done by invoking `Firewall::resolve_packet`, which will answer with the
 action to take for the supplied packet.
@@ -81,12 +84,13 @@ action to take for the supplied packet.
 use nullnet_firewall::{Firewall, FirewallDirection, FirewallAction};
 
 // build the firewall from the rules in a file
-let firewall = Firewall::new("./samples/firewall.txt").unwrap();
+let mut firewall = Firewall::new();
+firewall.set_rules("./samples/firewall.txt").unwrap();
 
-// here we suppose to have a packet to match against the firewall
+// here we suppose to have an incoming packet to match against the firewall
 let packet = [/* ... */];
 
-// determine action for packet, supposing incoming direction for packet
+// determine action for packet
 let action = firewall.resolve_packet(&packet, FirewallDirection::IN);
 
 // act accordingly
