@@ -16,7 +16,7 @@ lto = true
 strip = true
 
 [dependencies]
-etherparse = "0.14.2"
+etherparse = "0.15.0"
 chrono = { version = "0.4.31", default_features = false, features = ["clock"] }
 rusqlite = { version = "0.31.0", features = ["bundled"] }
 
