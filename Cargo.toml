@@ -18,7 +18,7 @@ strip = true
 [dependencies]
 etherparse = "0.14.2"
 chrono = { version = "0.4.31", default_features = false, features = ["clock"] }
-rusqlite = { version = "0.31.0", features = ["bundled"] }
+rusqlite = { version = "0.32.0", features = ["bundled"] }
 
 [dev-dependencies]
 serial_test = { version = "3.0.0", default_features = false }
