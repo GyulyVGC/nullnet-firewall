@@ -26,12 +26,12 @@ impl Fields {
             let net_header = headers.net;
             let transport_header = headers.transport;
             Fields {
-                source: get_source(&net_header),
-                dest: get_dest(&net_header),
-                sport: get_sport(&transport_header),
-                dport: get_dport(&transport_header),
-                proto: get_proto(&net_header),
-                icmp_type: get_icmp_type(&transport_header),
+                source: get_source(net_header.as_ref()),
+                dest: get_dest(net_header.as_ref()),
+                sport: get_sport(transport_header.as_ref()),
+                dport: get_dport(transport_header.as_ref()),
+                proto: get_proto(net_header.as_ref()),
+                icmp_type: get_icmp_type(transport_header.as_ref()),
                 size: packet.len(),
             }
         } else {

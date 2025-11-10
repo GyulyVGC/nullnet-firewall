@@ -54,8 +54,8 @@ impl Display for LogEntry {
             self.direction,
             self.action,
             format_proto(self.proto),
-            format_addr(&self.source),
-            format_addr(&self.dest),
+            format_addr(self.source.as_ref()),
+            format_addr(self.dest.as_ref()),
             format_port(self.sport),
             format_port(self.dport),
             format_icmp_type(self.icmp_type),
@@ -64,7 +64,7 @@ impl Display for LogEntry {
     }
 }
 
-fn format_addr(addr: &Option<LogIp>) -> String {
+fn format_addr(addr: Option<&LogIp>) -> String {
     if let Some(ip) = addr {
         ip.to_string()
     } else {

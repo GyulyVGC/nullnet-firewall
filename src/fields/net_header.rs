@@ -2,7 +2,7 @@ use std::net::IpAddr;
 
 use etherparse::NetHeaders;
 
-pub(crate) fn get_source(net_header: &Option<NetHeaders>) -> Option<IpAddr> {
+pub(crate) fn get_source(net_header: Option<&NetHeaders>) -> Option<IpAddr> {
     if let Some(ip) = net_header {
         match ip {
             NetHeaders::Ipv4(h, _) => Some(IpAddr::from(h.source)),
@@ -14,7 +14,7 @@ pub(crate) fn get_source(net_header: &Option<NetHeaders>) -> Option<IpAddr> {
     }
 }
 
-pub(crate) fn get_dest(net_header: &Option<NetHeaders>) -> Option<IpAddr> {
+pub(crate) fn get_dest(net_header: Option<&NetHeaders>) -> Option<IpAddr> {
     if let Some(ip) = net_header {
         match ip {
             NetHeaders::Ipv4(h, _) => Some(IpAddr::from(h.destination)),
@@ -26,7 +26,7 @@ pub(crate) fn get_dest(net_header: &Option<NetHeaders>) -> Option<IpAddr> {
     }
 }
 
-pub(crate) fn get_proto(net_header: &Option<NetHeaders>) -> Option<u8> {
+pub(crate) fn get_proto(net_header: Option<&NetHeaders>) -> Option<u8> {
     if let Some(ip) = net_header {
         match ip {
             NetHeaders::Ipv4(h, _) => Some(h.protocol.0),

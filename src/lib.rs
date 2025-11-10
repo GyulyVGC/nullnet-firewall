@@ -28,14 +28,11 @@
 //! [+] DIRECTION ACTION [OPTIONS]
 //! ```
 //!
-//! * Each rule can optionally be introduced by a `+` character; this will make the rule
-//! have higher priority (quick rule).
+//! * Each rule can optionally be introduced by a `+` character; this will make the rule have higher priority (quick rule).
 //!
-//! * `DIRECTION` can be either `IN` or `OUT` and represents the traffic directionality
-//! (see [`FirewallDirection`]).
+//! * `DIRECTION` can be either `IN` or `OUT` and represents the traffic directionality (see [`FirewallDirection`]).
 //!
-//! * `ACTION` can be either `ACCEPT`, `DENY`, or `REJECT` and represents the action
-//! associated with the rule (see [`FirewallAction`]).
+//! * `ACTION` can be either `ACCEPT`, `DENY`, or `REJECT` and represents the action associated with the rule (see [`FirewallAction`]).
 //!
 //! * For each rule, a list of **options** can be specified to match the desired traffic:
 //!   * `--dest`: destination IP addresses; the value is expressed in the form of a comma-separated
