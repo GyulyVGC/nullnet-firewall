@@ -55,7 +55,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let net_header = headers.net;
         assert_eq!(
-            get_source(&net_header),
+            get_source(net_header.as_ref()),
             Some(IpAddr::from_str("192.168.200.135").unwrap())
         );
     }
@@ -65,7 +65,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let net_header = headers.net;
         assert_eq!(
-            get_source(&net_header),
+            get_source(net_header.as_ref()),
             Some(IpAddr::from_str("2.1.1.2").unwrap())
         );
     }
@@ -74,7 +74,7 @@ mod tests {
     fn test_get_source_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let net_header = headers.net;
-        assert_eq!(get_source(&net_header), None);
+        assert_eq!(get_source(net_header.as_ref()), None);
     }
 
     #[test]
@@ -82,7 +82,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let net_header = headers.net;
         assert_eq!(
-            get_source(&net_header),
+            get_source(net_header.as_ref()),
             Some(IpAddr::from_str("3ffe:501:4819::42").unwrap())
         );
     }
@@ -92,7 +92,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let net_header = headers.net;
         assert_eq!(
-            get_source(&net_header),
+            get_source(net_header.as_ref()),
             Some(IpAddr::from_str("3ffe:501:4819::42").unwrap())
         );
     }
@@ -102,7 +102,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let net_header = headers.net;
         assert_eq!(
-            get_dest(&net_header),
+            get_dest(net_header.as_ref()),
             Some(IpAddr::from_str("192.168.200.21").unwrap())
         );
     }
@@ -112,7 +112,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let net_header = headers.net;
         assert_eq!(
-            get_dest(&net_header),
+            get_dest(net_header.as_ref()),
             Some(IpAddr::from_str("2.1.1.1").unwrap())
         );
     }
@@ -121,7 +121,7 @@ mod tests {
     fn test_get_dest_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let net_header = headers.net;
-        assert_eq!(get_dest(&net_header), None);
+        assert_eq!(get_dest(net_header.as_ref()), None);
     }
 
     #[test]
@@ -129,7 +129,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let net_header = headers.net;
         assert_eq!(
-            get_dest(&net_header),
+            get_dest(net_header.as_ref()),
             Some(IpAddr::from_str("3ffe:507:0:1:200:86ff:fe05:8da").unwrap())
         );
     }
@@ -139,7 +139,7 @@ mod tests {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let net_header = headers.net;
         assert_eq!(
-            get_dest(&net_header),
+            get_dest(net_header.as_ref()),
             Some(IpAddr::from_str("3ffe:507:0:1:200:86ff:fe05:8da").unwrap())
         );
     }
@@ -148,34 +148,34 @@ mod tests {
     fn test_get_proto_tcp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&TCP_PACKET).unwrap();
         let net_header = headers.net;
-        assert_eq!(get_proto(&net_header), Some(6)); // tcp
+        assert_eq!(get_proto(net_header.as_ref()), Some(6)); // tcp
     }
 
     #[test]
     fn test_get_proto_icmp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMP_PACKET).unwrap();
         let net_header = headers.net;
-        assert_eq!(get_proto(&net_header), Some(1)); // icmp
+        assert_eq!(get_proto(net_header.as_ref()), Some(1)); // icmp
     }
 
     #[test]
     fn test_get_proto_arp_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ARP_PACKET).unwrap();
         let net_header = headers.net;
-        assert_eq!(get_proto(&net_header), None);
+        assert_eq!(get_proto(net_header.as_ref()), None);
     }
 
     #[test]
     fn test_get_proto_udp_ipv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&UDP_IPV6_PACKET).unwrap();
         let net_header = headers.net;
-        assert_eq!(get_proto(&net_header), Some(17)); // udp
+        assert_eq!(get_proto(net_header.as_ref()), Some(17)); // udp
     }
 
     #[test]
     fn test_get_proto_icmpv6_packet() {
         let headers = PacketHeaders::from_ethernet_slice(&ICMPV6_PACKET).unwrap();
         let net_header = headers.net;
-        assert_eq!(get_proto(&net_header), Some(58)); // icmpv6
+        assert_eq!(get_proto(net_header.as_ref()), Some(58)); // icmpv6
     }
 }
