@@ -2,8 +2,8 @@ use std::sync::mpsc::Receiver;
 
 use rusqlite::Connection;
 
-use crate::log_level::LogLevel;
 use crate::LogEntry;
+use crate::log_level::LogLevel;
 
 struct Logger {
     db: Connection,
@@ -106,8 +106,8 @@ pub(crate) fn log(rx: &Receiver<LogEntry>) {
 mod tests {
     use std::str::FromStr;
 
-    use rusqlite::types::{FromSql, FromSqlResult, ValueRef};
     use rusqlite::Connection;
+    use rusqlite::types::{FromSql, FromSqlResult, ValueRef};
     use serial_test::serial;
 
     use crate::log_level::LogLevel;

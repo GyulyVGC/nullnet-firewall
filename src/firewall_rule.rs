@@ -321,9 +321,13 @@ mod tests {
             "Firewall error at line 2 - option '--icmp-type' is valid only if '--proto 1' or '--proto 58' is also specified"
         );
 
-        assert_eq!(FirewallRule::new(8,
-            "OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3 --icmp-type 8 --proto 57"
-        ), Err(FirewallError::NotApplicableIcmpType(8)));
+        assert_eq!(
+            FirewallRule::new(
+                8,
+                "OUT ACCEPT --source 8.8.8.8,7.7.7.7 --dport 900:1000,1,2,3 --icmp-type 8 --proto 57"
+            ),
+            Err(FirewallError::NotApplicableIcmpType(8))
+        );
     }
 
     #[test]

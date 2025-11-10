@@ -7,6 +7,7 @@ pub(crate) fn get_source(net_header: &Option<NetHeaders>) -> Option<IpAddr> {
         match ip {
             NetHeaders::Ipv4(h, _) => Some(IpAddr::from(h.source)),
             NetHeaders::Ipv6(h, _) => Some(IpAddr::from(h.source)),
+            NetHeaders::Arp(_) => None,
         }
     } else {
         None
@@ -18,6 +19,7 @@ pub(crate) fn get_dest(net_header: &Option<NetHeaders>) -> Option<IpAddr> {
         match ip {
             NetHeaders::Ipv4(h, _) => Some(IpAddr::from(h.destination)),
             NetHeaders::Ipv6(h, _) => Some(IpAddr::from(h.destination)),
+            NetHeaders::Arp(_) => None,
         }
     } else {
         None
@@ -29,6 +31,7 @@ pub(crate) fn get_proto(net_header: &Option<NetHeaders>) -> Option<u8> {
         match ip {
             NetHeaders::Ipv4(h, _) => Some(h.protocol.0),
             NetHeaders::Ipv6(h, _) => Some(h.next_header.0),
+            NetHeaders::Arp(_) => None,
         }
     } else {
         None
@@ -44,7 +47,7 @@ mod tests {
 
     use crate::fields::net_header::{get_dest, get_proto, get_source};
     use crate::utils::raw_packets::test_packets::{
-        ARP_PACKET, ICMPV6_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+        ARP_PACKET, ICMP_PACKET, ICMPV6_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
 
     #[test]

@@ -2,8 +2,8 @@ use std::fmt::{Display, Formatter};
 use std::net::IpAddr;
 use std::str::FromStr;
 
-use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
+use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
 
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) struct LogIp {
@@ -41,9 +41,9 @@ mod tests {
     use std::net::IpAddr;
     use std::str::FromStr;
 
+    use rusqlite::ToSql;
     use rusqlite::types::ToSqlOutput;
     use rusqlite::types::Value::Text;
-    use rusqlite::ToSql;
 
     use crate::logs::log_ip::LogIp;
 

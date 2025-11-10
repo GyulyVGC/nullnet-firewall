@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
-use rusqlite::types::ToSqlOutput;
 use rusqlite::ToSql;
+use rusqlite::types::ToSqlOutput;
 
 use crate::FirewallError;
 
@@ -46,9 +46,9 @@ impl ToSql for FirewallAction {
 
 #[cfg(test)]
 mod tests {
+    use rusqlite::ToSql;
     use rusqlite::types::ToSqlOutput;
     use rusqlite::types::Value::Text;
-    use rusqlite::ToSql;
 
     use crate::{FirewallAction, FirewallError};
 

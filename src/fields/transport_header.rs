@@ -42,7 +42,7 @@ mod tests {
 
     use crate::fields::transport_header::{get_dport, get_icmp_type, get_sport};
     use crate::utils::raw_packets::test_packets::{
-        ARP_PACKET, ICMPV6_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+        ARP_PACKET, ICMP_PACKET, ICMPV6_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
 
     #[test]

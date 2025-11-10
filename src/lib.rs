@@ -1117,7 +1117,9 @@ mod tests {
     #[test]
     fn test_file_error_not_applicable_icmp_type() {
         let path = &get_error_file_path("not_applicable_icmp_type");
-        let expected = String::from("Firewall error at line 6 - option '--icmp-type' is valid only if '--proto 1' or '--proto 58' is also specified");
+        let expected = String::from(
+            "Firewall error at line 6 - option '--icmp-type' is valid only if '--proto 1' or '--proto 58' is also specified",
+        );
 
         assert_eq!(
             Firewall::new().set_rules(path).unwrap_err().to_string(),

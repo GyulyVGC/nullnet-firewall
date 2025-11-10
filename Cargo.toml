@@ -1,7 +1,7 @@
 [package]
 name = "nullnet-firewall"
 version = "0.2.2"
-edition = "2021"
+edition = "2024"
 authors = [ "Giuliano Bellini" ]
 description = "Rust-based firewall for network drivers"
 license = "Apache-2.0"
@@ -16,9 +16,9 @@ lto = true
 strip = true
 
 [dependencies]
-etherparse = "0.14.2"
-chrono = { version = "0.4.31", default_features = false, features = ["clock"] }
-rusqlite = { version = "0.31.0", features = ["bundled"] }
+etherparse = "0.19.0"
+chrono = { version = "0.4.42", default-features = false, features = ["clock"] }
+rusqlite = { version = "0.37.0", features = ["bundled"] }
 
 [dev-dependencies]
-serial_test = { version = "3.0.0", default_features = false }
+serial_test = { version = "3.2.0", default-features = false }

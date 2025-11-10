@@ -2,8 +2,8 @@ use std::net::IpAddr;
 use std::ops::RangeInclusive;
 use std::str::FromStr;
 
-use crate::firewall_option::FirewallOption;
 use crate::FirewallError;
+use crate::firewall_option::FirewallOption;
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct IpCollection {
@@ -68,10 +68,10 @@ mod tests {
     use std::ops::RangeInclusive;
     use std::str::FromStr;
 
+    use crate::FirewallError;
     use crate::firewall_option::FirewallOption;
     use crate::utils::ip_collection::IpCollection;
     use crate::utils::port_collection::PortCollection;
-    use crate::FirewallError;
 
     #[test]
     fn test_new_source_collections() {

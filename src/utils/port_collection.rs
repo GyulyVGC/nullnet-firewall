@@ -1,8 +1,8 @@
 use std::ops::RangeInclusive;
 use std::str::FromStr;
 
-use crate::firewall_option::FirewallOption;
 use crate::FirewallError;
+use crate::firewall_option::FirewallOption;
 
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) struct PortCollection {
@@ -63,9 +63,9 @@ impl PortCollection {
 
 #[cfg(test)]
 mod tests {
+    use crate::FirewallError;
     use crate::firewall_option::FirewallOption;
     use crate::utils::port_collection::PortCollection;
-    use crate::FirewallError;
 
     #[test]
     fn test_new_sport_collections() {

@@ -2,7 +2,7 @@ use std::net::IpAddr;
 
 use etherparse::PacketHeaders;
 
-use crate::{get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport, DataLink};
+use crate::{DataLink, get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
 
 #[derive(Default, PartialEq, Debug)]
 pub(crate) struct Fields {
@@ -49,7 +49,7 @@ mod tests {
     use std::str::FromStr;
 
     use crate::utils::raw_packets::test_packets::{
-        ARP_PACKET, ICMPV6_PACKET, ICMP_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
+        ARP_PACKET, ICMP_PACKET, ICMPV6_PACKET, TCP_PACKET, UDP_IPV6_PACKET,
     };
     use crate::{DataLink, Fields};
 
