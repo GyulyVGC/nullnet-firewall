@@ -3,7 +3,7 @@ use std::net::IpAddr;
 use std::str::FromStr;
 
 use rusqlite::ToSql;
-use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) struct LogIp {
@@ -25,7 +25,7 @@ impl ToSql for LogIp {
 impl FromSql for LogIp {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         FromSqlResult::Ok(LogIp {
-            ip: IpAddr::from_str(value.as_str().unwrap()).unwrap(),
+            ip: IpAddr::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)?,
         })
     }
 }

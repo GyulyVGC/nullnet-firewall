@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use chrono::{DateTime, Local, SecondsFormat};
 use rusqlite::ToSql;
-use rusqlite::types::{FromSql, FromSqlResult, ToSqlOutput, ValueRef};
+use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 
 #[derive(PartialEq, Debug, Clone)]
 pub(crate) struct LogTimestamp {
@@ -27,7 +27,8 @@ impl ToSql for LogTimestamp {
 impl FromSql for LogTimestamp {
     fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
         FromSqlResult::Ok(LogTimestamp {
-            timestamp: DateTime::from_str(value.as_str().unwrap()).unwrap(),
+            timestamp: DateTime::from_str(value.as_str()?)
+                .map_err(|_| FromSqlError::InvalidType)?,
         })
     }
 }

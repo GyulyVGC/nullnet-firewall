@@ -27,8 +27,8 @@ pub(crate) fn get_dport(transport_header: Option<&TransportHeader>) -> Option<u1
 pub(crate) fn get_icmp_type(transport_header: Option<&TransportHeader>) -> Option<u8> {
     if let Some(transport) = transport_header {
         match transport {
-            TransportHeader::Icmpv4(h) => Some(*h.to_bytes().first().unwrap()),
-            TransportHeader::Icmpv6(h) => Some(*h.to_bytes().first().unwrap()),
+            TransportHeader::Icmpv4(h) => Some(*h.to_bytes().first().unwrap_or(&0)),
+            TransportHeader::Icmpv6(h) => Some(*h.to_bytes().first().unwrap_or(&0)),
             TransportHeader::Tcp(_) | TransportHeader::Udp(_) => None,
         }
     } else {

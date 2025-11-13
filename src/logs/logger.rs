@@ -23,7 +23,7 @@ const SQLITE_PATH: &str = "./test.sqlite";
 impl Logger {
     fn new() -> Logger {
         Logger {
-            db: Connection::open(SQLITE_PATH).unwrap(),
+            db: Connection::open(SQLITE_PATH).expect("unable to open log database"),
             batch: Vec::new(),
             batch_size: BATCH_SIZE,
             console_entries: 0,
@@ -48,7 +48,7 @@ impl Logger {
         )",
                 (),
             )
-            .unwrap();
+            .expect("unable to create traffic table in log database");
     }
 
     fn store_entry(&mut self, log_entry: LogEntry) {
@@ -79,7 +79,7 @@ impl Logger {
     }
 
     fn store_batch(&mut self) {
-        let transaction = self.db.transaction().unwrap();
+        let transaction = self.db.transaction().expect("unable to start transaction");
         for log_entry in &self.batch {
             transaction.execute(
                 "INSERT INTO traffic (timestamp, direction, action, proto, source, dest, sport, dport, icmptype, size)
@@ -87,9 +87,9 @@ impl Logger {
                 (&log_entry.timestamp, &log_entry.direction, &log_entry.action,
                  &log_entry.proto, &log_entry.source, &log_entry.dest, &log_entry.sport,
                  &log_entry.dport, &log_entry.icmp_type, &log_entry.size),
-            ).unwrap();
+            ).expect("unable to insert log entry into database");
         }
-        transaction.commit().unwrap();
+        transaction.commit().expect("unable to commit transaction");
     }
 }
 
@@ -107,7 +107,7 @@ mod tests {
     use std::str::FromStr;
 
     use rusqlite::Connection;
-    use rusqlite::types::{FromSql, FromSqlResult, ValueRef};
+    use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ValueRef};
     use serial_test::serial;
 
     use crate::log_level::LogLevel;
@@ -130,7 +130,9 @@ mod tests {
 
     impl FromSql for FirewallAction {
         fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-            FromSqlResult::Ok(FirewallAction::from_str(value.as_str().unwrap()).unwrap())
+            FromSqlResult::Ok(
+                FirewallAction::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)?,
+            )
         }
     }
 
@@ -148,7 +150,10 @@ mod tests {
 
     impl FromSql for FirewallDirection {
         fn column_result(value: ValueRef<'_>) -> FromSqlResult<Self> {
-            FromSqlResult::Ok(FirewallDirection::from_str(value.as_str().unwrap()).unwrap())
+            FromSqlResult::Ok(
+                FirewallDirection::from_str(value.as_str()?)
+                    .map_err(|_| FromSqlError::InvalidType)?,
+            )
         }
     }
 

@@ -274,7 +274,7 @@ impl Firewall {
     /// ```
     pub fn set_rules(&mut self, file_path: &str) -> Result<(), FirewallError> {
         let mut rules = Vec::new();
-        let file = File::open(file_path).unwrap();
+        let file = File::open(file_path).expect("could not open the firewall rules file");
 
         for (l, firewall_rule_str_result) in BufReader::new(file).lines().enumerate() {
             let Ok(firewall_rule_str_raw) = firewall_rule_str_result else {
@@ -434,12 +434,11 @@ impl Firewall {
 impl Default for Firewall {
     fn default() -> Self {
         let (tx, rx): (Sender<LogEntry>, Receiver<LogEntry>) = mpsc::channel();
-        thread::Builder::new()
+        let _ = thread::Builder::new()
             .name("logger".to_string())
             .spawn(move || {
                 log(&rx);
-            })
-            .unwrap();
+            });
 
         Firewall {
             rules: Vec::new(),
