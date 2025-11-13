@@ -1,6 +1,6 @@
 use std::net::IpAddr;
 
-use etherparse::PacketHeaders;
+use etherparse::LaxPacketHeaders;
 
 use crate::{DataLink, get_dest, get_dport, get_icmp_type, get_proto, get_source, get_sport};
 
@@ -18,11 +18,11 @@ pub(crate) struct Fields {
 impl Fields {
     pub(crate) fn new(packet: &[u8], data_link: DataLink) -> Fields {
         let headers_result = match data_link {
-            DataLink::Ethernet => PacketHeaders::from_ethernet_slice(packet),
-            DataLink::RawIP => PacketHeaders::from_ip_slice(packet),
+            DataLink::Ethernet => LaxPacketHeaders::from_ethernet(packet).ok(),
+            DataLink::RawIP => LaxPacketHeaders::from_ip(packet).ok(),
         };
 
-        if let Ok(headers) = headers_result {
+        if let Some(headers) = headers_result {
             let net_header = headers.net;
             let transport_header = headers.transport;
             Fields {
